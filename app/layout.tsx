@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sticky Memory — リアルタイム芳名帳",
+  title: "つくば愛クリスト協会 — 芳名帳",
   description: "QRから写真とメッセージを投稿すると、リアルタイムでボードに表示されます。",
 };
 

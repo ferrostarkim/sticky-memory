@@ -12,20 +12,26 @@ export default function SpotlightPage() {
 
   return (
     <main className="bg-stage grain relative min-h-screen flex flex-col overflow-hidden">
-      {/* Decorative bokeh lights */}
+      {/* Decorative bokeh lights (soft, cheerful) */}
       <div className="bokeh w-40 h-40 top-[12%] left-[8%] animate-float" />
-      <div className="bokeh w-24 h-24 top-[24%] right-[14%] animate-float" style={{ animationDelay: '2s' }} />
-      <div className="bokeh w-16 h-16 top-[62%] left-[18%] animate-float" style={{ animationDelay: '4s' }} />
-      <div className="bokeh w-28 h-28 bottom-[16%] right-[10%] animate-float" style={{ animationDelay: '1s' }} />
+      <div
+        className="bokeh w-24 h-24 top-[22%] right-[14%] animate-float"
+        style={{ animationDelay: '2s', background: 'radial-gradient(circle at 40% 40%, rgba(255,255,255,0.85), rgba(168,208,240,0.45) 45%, rgba(168,208,240,0) 72%)' }}
+      />
+      <div className="bokeh w-16 h-16 top-[60%] left-[16%] animate-float" style={{ animationDelay: '4s' }} />
+      <div
+        className="bokeh w-28 h-28 bottom-[18%] right-[10%] animate-float"
+        style={{ animationDelay: '1s', background: 'radial-gradient(circle at 40% 40%, rgba(255,255,255,0.85), rgba(255,196,178,0.45) 45%, rgba(255,196,178,0) 72%)' }}
+      />
 
       <header className="relative z-20 flex items-center justify-between px-9 py-6">
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-display text-3xl font-semibold text-amber-50">Sticky Memory</h1>
-          <span className="text-amber-200/40 text-xs font-ui">芳名帳</span>
+        <div>
+          <p className="font-display italic text-[#c07d24] text-sm leading-none">Family Guestbook</p>
+          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)]">つくば愛クリスト協会</h1>
         </div>
         <Link
           href="/"
-          className="font-ui text-amber-200/70 hover:text-amber-100 font-medium transition-colors"
+          className="font-ui text-[#b0793a] hover:text-[#8f5f24] font-medium transition-colors"
         >
           ← ボードに戻る
         </Link>

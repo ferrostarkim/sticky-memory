@@ -27,28 +27,31 @@ body {
 .font-hand { font-family: var(--font-hand); }
 .font-ui { font-family: var(--font-ui); }
 
-/* ---- Ambient backgrounds --------------------------------------------------- */
-/* The wall: a warm room with a soft golden glow spilling onto the board. */
+/* ---- Ambient backgrounds ---------------------------------------------------
+   Bright, cheerful daytime light — warm sun glow with a fresh sky tint. */
 .bg-room {
   background:
-    radial-gradient(1100px 620px at 50% -8%, rgba(236, 199, 132, 0.28), transparent 62%),
-    radial-gradient(900px 900px at 50% 130%, rgba(0, 0, 0, 0.45), transparent 60%),
-    linear-gradient(180deg, #2a1c14 0%, #1a110c 100%);
+    radial-gradient(1100px 640px at 50% -12%, rgba(255, 240, 201, 0.95), transparent 60%),
+    radial-gradient(760px 680px at 88% 14%, rgba(198, 228, 246, 0.55), transparent 62%),
+    radial-gradient(760px 680px at 8% 24%, rgba(255, 221, 205, 0.5), transparent 62%),
+    linear-gradient(180deg, #fffbf3 0%, #fbeeda 100%);
 }
 
-/* The spotlight stage: a dark theatre with a warm pool of light at the front. */
+/* The spotlight stage: a bright, airy celebration screen. */
 .bg-stage {
   background:
-    radial-gradient(760px 520px at 50% 76%, rgba(236, 199, 132, 0.34), transparent 60%),
-    radial-gradient(1200px 900px at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.55) 100%),
-    linear-gradient(180deg, #22150e 0%, #0f0906 100%);
+    radial-gradient(860px 580px at 50% 70%, rgba(255, 238, 199, 0.95), transparent 62%),
+    radial-gradient(720px 640px at 12% 14%, rgba(198, 228, 246, 0.6), transparent 60%),
+    radial-gradient(720px 640px at 88% 16%, rgba(255, 214, 196, 0.55), transparent 60%),
+    linear-gradient(180deg, #fefaef 0%, #f7e9d2 100%);
 }
 
-/* The submit page: warm cream paper light. */
+/* The submit page: bright warm paper light. */
 .bg-warm {
   background:
-    radial-gradient(700px 420px at 50% -12%, rgba(236, 199, 132, 0.5), transparent 60%),
-    linear-gradient(180deg, #f7f0e2 0%, #efe0c9 100%);
+    radial-gradient(720px 440px at 50% -12%, rgba(255, 238, 199, 0.95), transparent 60%),
+    radial-gradient(600px 520px at 92% 8%, rgba(198, 228, 246, 0.5), transparent 62%),
+    linear-gradient(180deg, #fffbf3 0%, #f5e8d1 100%);
 }
 
 /* ---- Grain overlay --------------------------------------------------------- */
@@ -57,9 +60,9 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  opacity: 0.18;
-  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.1;
+  mix-blend-mode: soft-light;
 }
 
 /* ---- Cork + wooden frame --------------------------------------------------- */
@@ -72,7 +75,7 @@ body {
 }
 
 .cork {
-  background-color: #cba578;
+  background-color: #dab98a;
   background-image:
     radial-gradient(rgba(120, 80, 40, 0.30) 1px, transparent 1.6px),
     radial-gradient(rgba(90, 60, 30, 0.24) 1px, transparent 1.6px),
@@ -117,8 +120,8 @@ body {
 .bokeh {
   position: absolute;
   border-radius: 9999px;
-  background: radial-gradient(circle at 35% 35%, rgba(255, 224, 168, 0.55), rgba(217, 154, 63, 0) 70%);
-  filter: blur(6px);
+  background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.85), rgba(255, 224, 168, 0.4) 45%, rgba(255, 224, 168, 0) 72%);
+  filter: blur(5px);
   pointer-events: none;
 }
 

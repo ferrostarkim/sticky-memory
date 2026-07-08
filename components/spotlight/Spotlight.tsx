@@ -44,7 +44,7 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
 
   if (n === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-amber-100/70 text-2xl">
+      <div className="flex-1 flex items-center justify-center text-[var(--ink-soft)] text-2xl font-hand">
         最初のメッセージを待っています…
       </div>
     );
@@ -136,7 +136,7 @@ function Card({ memory, highlight }: { memory: Memory; highlight: boolean }) {
   return (
     <div
       className={`paper relative w-full h-full px-5 pt-9 pb-4 flex flex-col ${memory.color} ${
-        highlight ? 'ring-1 ring-white/50 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.7)]' : ''
+        highlight ? 'ring-2 ring-[var(--gold)]/45 shadow-[0_30px_60px_-22px_rgba(120,80,30,0.45)]' : ''
       }`}
     >
       <div className="washi absolute -top-3.5 left-1/2 -translate-x-1/2 w-20 h-7 rounded-[2px] rotate-[-3deg]" />
