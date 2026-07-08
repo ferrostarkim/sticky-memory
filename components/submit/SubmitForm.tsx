@@ -130,12 +130,12 @@ export default function SubmitForm() {
   if (status === 'done') {
     return (
       <div className="text-center space-y-6 py-10">
-        <div className="text-5xl">🎉</div>
-        <h2 className="text-2xl font-bold text-neutral-800">ボードに表示されました！</h2>
-        <p className="text-neutral-600">メッセージありがとうございます。</p>
+        <div className="text-6xl animate-pop">🎉</div>
+        <h2 className="font-display text-3xl font-semibold text-[var(--ink)]">ボードに表示されました！</h2>
+        <p className="font-hand text-[var(--ink-soft)] text-lg">メッセージありがとうございます。</p>
         <button
           onClick={reset}
-          className="px-6 py-3 rounded-full bg-amber-600 text-white font-semibold shadow hover:bg-amber-700 transition"
+          className="font-ui px-6 py-3 rounded-full bg-gradient-to-b from-[#e6ac52] to-[#d0872f] text-white font-semibold shadow-[0_10px_22px_-8px_rgba(208,135,47,0.85)] hover:brightness-105 transition"
         >
           もう一枚追加
         </button>
@@ -146,7 +146,7 @@ export default function SubmitForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-neutral-700 mb-1">
+        <label className="font-ui block text-sm font-medium text-[var(--ink)] mb-1.5">
           お名前
         </label>
         <input
@@ -155,12 +155,12 @@ export default function SubmitForm() {
           onChange={(e) => setAuthor(e.target.value)}
           placeholder="匿名"
           maxLength={40}
-          className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="font-ui w-full rounded-xl border border-[#e4d6bd] bg-white/70 px-4 py-3 text-[var(--ink)] placeholder:text-[var(--ink-soft)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:border-transparent transition"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-neutral-700 mb-1">
+        <label className="font-ui block text-sm font-medium text-[var(--ink)] mb-1.5">
           メッセージ
         </label>
         <textarea
@@ -169,12 +169,12 @@ export default function SubmitForm() {
           placeholder="お祝いや挨拶を書いてください…"
           rows={4}
           maxLength={280}
-          className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-neutral-900 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="font-hand w-full rounded-xl border border-[#e4d6bd] bg-white/70 px-4 py-3 text-[var(--ink)] text-lg resize-none placeholder:text-[var(--ink-soft)]/50 placeholder:font-ui placeholder:text-base focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:border-transparent transition"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-neutral-700 mb-1">
+        <label className="font-ui block text-sm font-medium text-[var(--ink)] mb-1.5">
           写真（任意）
         </label>
         <input
@@ -182,7 +182,7 @@ export default function SubmitForm() {
           accept="image/*"
           capture="environment"
           onChange={handleFile}
-          className="block w-full text-sm text-neutral-600 file:mr-4 file:rounded-full file:border-0 file:bg-amber-100 file:px-4 file:py-2 file:font-semibold file:text-amber-800"
+          className="font-ui block w-full text-sm text-[var(--ink-soft)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--gold)]/15 file:px-4 file:py-2 file:font-medium file:text-[#a4712a] hover:file:bg-[var(--gold)]/25 file:transition"
         />
         {preview && (
           <div className="mt-3 relative">
@@ -205,12 +205,12 @@ export default function SubmitForm() {
         )}
       </div>
 
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="font-ui text-red-600 text-sm">{error}</p>}
 
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="w-full py-4 rounded-full bg-amber-600 text-white text-lg font-semibold shadow-lg hover:bg-amber-700 disabled:opacity-60 transition"
+        className="font-ui w-full py-4 rounded-full bg-gradient-to-b from-[#e6ac52] to-[#d0872f] text-white text-lg font-semibold shadow-[0_12px_26px_-8px_rgba(208,135,47,0.85)] hover:brightness-105 active:brightness-95 disabled:opacity-60 transition"
       >
         {status === 'sending' ? '投稿中…' : 'ボードに投稿'}
       </button>

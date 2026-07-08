@@ -7,10 +7,10 @@ interface JoinBannerProps {
   size?: number;
 }
 
-// Shows a "scan to add your message" QR pointing at /submit. The absolute URL is
-// derived from the browser location so it works on whatever host/IP the display
-// is served from at the venue.
-export default function JoinBanner({ size = 130 }: JoinBannerProps) {
+// A little paper "join" card: QR + short instruction. The absolute URL is
+// derived from the browser location so it works on whatever host the display
+// is served from.
+export default function JoinBanner({ size = 116 }: JoinBannerProps) {
   const [url, setUrl] = useState('');
 
   useEffect(() => {
@@ -18,17 +18,18 @@ export default function JoinBanner({ size = 130 }: JoinBannerProps) {
   }, []);
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="paper bg-[var(--cream)] rounded-lg px-4 py-3 flex items-center gap-4">
+      <div className="washi absolute -top-3 left-6 w-12 h-5 rounded-[2px] rotate-[-5deg]" />
       {url && <QrCode text={url} size={size} />}
-      <div className="text-neutral-700">
-        <div className="text-sm tracking-wide text-neutral-500">
-          スキャンしてメッセージを追加
+      <div className="pr-1">
+        <div className="font-hand text-[var(--ink)] text-lg leading-tight">
+          スキャンして
+          <br />
+          メッセージを追加
         </div>
-        {url && (
-          <div className="font-mono text-sm break-all text-neutral-800">
-            {url}
-          </div>
-        )}
+        <div className="font-ui text-[10px] text-[var(--ink-soft)] mt-1 uppercase tracking-widest">
+          Scan to join
+        </div>
       </div>
     </div>
   );

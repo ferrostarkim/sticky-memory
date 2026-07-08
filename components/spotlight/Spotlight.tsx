@@ -135,28 +135,28 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
 function Card({ memory, highlight }: { memory: Memory; highlight: boolean }) {
   return (
     <div
-      className={`relative w-full h-full p-4 pt-8 flex flex-col ${memory.color} ${
-        highlight ? 'shadow-2xl ring-2 ring-white/70' : 'shadow-xl'
+      className={`paper relative w-full h-full px-5 pt-9 pb-4 flex flex-col ${memory.color} ${
+        highlight ? 'ring-1 ring-white/50 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.7)]' : ''
       }`}
     >
-      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-red-500 rounded-full shadow-lg border-2 border-red-700" />
+      <div className="washi absolute -top-3.5 left-1/2 -translate-x-1/2 w-20 h-7 rounded-[2px] rotate-[-3deg]" />
 
       {memory.image && (
         <img
           src={memory.image}
           alt={`${memory.author}さんの写真`}
-          className="w-full h-40 object-cover rounded mb-2 bg-white/60 border border-black/10"
+          className="relative w-full h-40 object-cover rounded-[2px] mb-3 bg-white/70 p-1.5 shadow-sm ring-1 ring-black/5"
         />
       )}
 
       {memory.content && (
-        <p className="flex-1 text-gray-800 text-lg font-medium whitespace-pre-wrap break-words leading-snug overflow-hidden">
+        <p className="font-hand relative flex-1 text-[var(--ink)] text-2xl leading-snug whitespace-pre-wrap break-words overflow-hidden">
           {memory.content}
         </p>
       )}
 
-      <div className="text-right text-gray-700 text-base font-semibold italic mt-2">
-        - {memory.author}
+      <div className="font-hand relative text-right text-[var(--ink-soft)] text-xl mt-3">
+        — {memory.author}
       </div>
     </div>
   );

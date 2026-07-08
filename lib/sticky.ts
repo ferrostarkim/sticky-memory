@@ -1,12 +1,14 @@
 // Random sticky-note appearance, generated on the client when a note is posted
 // (there's no server to assign it anymore — everything goes straight to Supabase).
 const COLORS = [
-  'bg-yellow-200',
-  'bg-green-200',
-  'bg-blue-200',
-  'bg-pink-200',
-  'bg-purple-200',
-  'bg-orange-200',
+  'bg-amber-100',
+  'bg-rose-100',
+  'bg-emerald-100',
+  'bg-sky-100',
+  'bg-violet-100',
+  'bg-orange-100',
+  'bg-teal-100',
+  'bg-lime-100',
 ];
 
 export function makeStickyStyle(): { color: string; rotation: number } {

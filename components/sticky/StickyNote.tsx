@@ -6,36 +6,40 @@ interface StickyNoteProps {
 }
 
 export default function StickyNote({ memory }: StickyNoteProps) {
-  // Apply dynamic rotation using inline styles
   const rotationStyle = { transform: `rotate(${memory.rotation}deg)` };
+  // Nudge the tape rotation opposite the note for a hand-placed look.
+  const tapeStyle = { transform: `rotate(${(-memory.rotation * 0.8).toFixed(1)}deg)` };
 
   return (
     <div
-      className={`relative w-52 min-h-52 p-3 pt-6 shadow-lg flex flex-col ${memory.color}`}
+      className={`paper relative w-52 min-h-52 px-4 pt-7 pb-3 flex flex-col ${memory.color}`}
       style={rotationStyle}
     >
-      {/* Pin element at the top center */}
-      <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-red-500 rounded-full shadow-md border border-red-700"></div>
+      {/* Washi tape holding the note */}
+      <div
+        className="washi absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 rounded-[2px]"
+        style={tapeStyle}
+      />
 
-      {/* Optional uploaded photo */}
+      {/* Optional photo, framed like a printed snapshot */}
       {memory.image && (
         <img
           src={memory.image}
           alt={`${memory.author}さんの写真`}
-          className="w-full h-36 object-cover rounded-sm mb-2 border border-black/10 bg-white"
+          className="relative w-full h-36 object-cover rounded-[2px] mb-2 bg-white/70 p-1 shadow-sm ring-1 ring-black/5"
         />
       )}
 
-      {/* Main message content */}
+      {/* Message in handwriting */}
       {memory.content && (
-        <p className="flex-1 text-gray-800 font-medium whitespace-pre-wrap break-words leading-snug">
+        <p className="font-hand relative flex-1 text-[var(--ink)] text-[1.05rem] leading-snug whitespace-pre-wrap break-words">
           {memory.content}
         </p>
       )}
 
-      {/* Author signature */}
-      <div className="text-right text-gray-600 text-sm font-semibold italic mt-2">
-        - {memory.author}
+      {/* Signature */}
+      <div className="font-hand relative text-right text-[var(--ink-soft)] text-sm mt-2">
+        — {memory.author}
       </div>
     </div>
   );
