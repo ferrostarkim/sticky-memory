@@ -45,7 +45,7 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
   if (n === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-amber-100/70 text-2xl">
-        Waiting for the first message…
+        最初のメッセージを待っています…
       </div>
     );
   }
@@ -144,7 +144,7 @@ function Card({ memory, highlight }: { memory: Memory; highlight: boolean }) {
       {memory.image && (
         <img
           src={memory.image}
-          alt={`Photo from ${memory.author}`}
+          alt={`${memory.author}さんの写真`}
           className="w-full h-40 object-cover rounded mb-2 bg-white/60 border border-black/10"
         />
       )}

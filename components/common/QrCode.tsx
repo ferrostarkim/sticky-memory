@@ -27,7 +27,7 @@ export default function QrCode({ text, size = 150 }: QrCodeProps) {
       style={{ width: size + 16, height: size + 16 }}
     >
       {src ? (
-        <img src={src} width={size} height={size} alt="QR code to join" />
+        <img src={src} width={size} height={size} alt="参加用QRコード" />
       ) : (
         <div style={{ width: size, height: size }} />
       )}

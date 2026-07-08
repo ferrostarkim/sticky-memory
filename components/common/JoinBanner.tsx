@@ -21,8 +21,8 @@ export default function JoinBanner({ size = 130 }: JoinBannerProps) {
     <div className="flex items-center gap-4">
       {url && <QrCode text={url} size={size} />}
       <div className="text-neutral-700">
-        <div className="text-sm uppercase tracking-wide text-neutral-500">
-          Scan to add your note
+        <div className="text-sm tracking-wide text-neutral-500">
+          スキャンしてメッセージを追加
         </div>
         {url && (
           <div className="font-mono text-sm break-all text-neutral-800">

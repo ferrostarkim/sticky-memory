@@ -55,20 +55,20 @@ export default function SubmitForm() {
       setPreview(processed.dataUrl);
       setBlob(processed.blob);
     } catch {
-      setError('Could not read that image. Try another photo.');
+      setError('画像を読み込めませんでした。別の写真をお試しください。');
     }
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!content.trim() && !blob) {
-      setError('Please write a message or add a photo.');
+      setError('メッセージを書くか、写真を追加してください。');
       return;
     }
 
     const supabase = getSupabase();
     if (!supabase) {
-      setError('The board is not configured yet. Please contact the host.');
+      setError('ボードがまだ設定されていません。主催者にお問い合わせください。');
       return;
     }
 
@@ -90,7 +90,7 @@ export default function SubmitForm() {
       // 2. Insert the note. Realtime broadcasts it to every open board.
       const { color, rotation } = makeStickyStyle();
       const { error: insertError } = await supabase.from('memories').insert({
-        author: author.trim() || 'Anonymous',
+        author: author.trim() || '匿名',
         content: content.trim(),
         image_url: imageUrl,
         color,
@@ -102,7 +102,7 @@ export default function SubmitForm() {
     } catch (err) {
       console.error(err);
       setStatus('error');
-      setError('Something went wrong. Please try again.');
+      setError('問題が発生しました。もう一度お試しください。');
     }
   }
 
@@ -118,10 +118,10 @@ export default function SubmitForm() {
   if (!isSupabaseConfigured) {
     return (
       <div className="text-center text-neutral-600 py-8">
-        <p className="font-semibold text-neutral-800 mb-2">Not configured</p>
+        <p className="font-semibold text-neutral-800 mb-2">未設定です</p>
         <p className="text-sm">
-          Set <code>NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
-          <code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code> to enable the guestbook.
+          芳名帳を有効にするには <code>NEXT_PUBLIC_SUPABASE_URL</code> と{' '}
+          <code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code> を設定してください。
         </p>
       </div>
     );
@@ -131,13 +131,13 @@ export default function SubmitForm() {
     return (
       <div className="text-center space-y-6 py-10">
         <div className="text-5xl">🎉</div>
-        <h2 className="text-2xl font-bold text-neutral-800">It&apos;s on the board!</h2>
-        <p className="text-neutral-600">Thanks for sharing your message.</p>
+        <h2 className="text-2xl font-bold text-neutral-800">ボードに表示されました！</h2>
+        <p className="text-neutral-600">メッセージありがとうございます。</p>
         <button
           onClick={reset}
           className="px-6 py-3 rounded-full bg-amber-600 text-white font-semibold shadow hover:bg-amber-700 transition"
         >
-          Add another
+          もう一枚追加
         </button>
       </div>
     );
@@ -147,13 +147,13 @@ export default function SubmitForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <label className="block text-sm font-semibold text-neutral-700 mb-1">
-          Your name
+          お名前
         </label>
         <input
           type="text"
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
-          placeholder="Anonymous"
+          placeholder="匿名"
           maxLength={40}
           className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
         />
@@ -161,12 +161,12 @@ export default function SubmitForm() {
 
       <div>
         <label className="block text-sm font-semibold text-neutral-700 mb-1">
-          Message
+          メッセージ
         </label>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write a congratulations or hello…"
+          placeholder="お祝いや挨拶を書いてください…"
           rows={4}
           maxLength={280}
           className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-neutral-900 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -175,7 +175,7 @@ export default function SubmitForm() {
 
       <div>
         <label className="block text-sm font-semibold text-neutral-700 mb-1">
-          Photo (optional)
+          写真（任意）
         </label>
         <input
           type="file"
@@ -188,7 +188,7 @@ export default function SubmitForm() {
           <div className="mt-3 relative">
             <img
               src={preview}
-              alt="Preview"
+              alt="プレビュー"
               className="w-full max-h-64 object-contain rounded-xl border border-neutral-200"
             />
             <button
@@ -199,7 +199,7 @@ export default function SubmitForm() {
               }}
               className="absolute top-2 right-2 bg-black/60 text-white text-xs px-3 py-1 rounded-full"
             >
-              Remove
+              削除
             </button>
           </div>
         )}
@@ -212,7 +212,7 @@ export default function SubmitForm() {
         disabled={status === 'sending'}
         className="w-full py-4 rounded-full bg-amber-600 text-white text-lg font-semibold shadow-lg hover:bg-amber-700 disabled:opacity-60 transition"
       >
-        {status === 'sending' ? 'Posting…' : 'Post to the board'}
+        {status === 'sending' ? '投稿中…' : 'ボードに投稿'}
       </button>
     </form>
   );

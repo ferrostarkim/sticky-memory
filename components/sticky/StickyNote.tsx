@@ -21,7 +21,7 @@ export default function StickyNote({ memory }: StickyNoteProps) {
       {memory.image && (
         <img
           src={memory.image}
-          alt={`Photo from ${memory.author}`}
+          alt={`${memory.author}さんの写真`}
           className="w-full h-36 object-cover rounded-sm mb-2 border border-black/10 bg-white"
         />
       )}

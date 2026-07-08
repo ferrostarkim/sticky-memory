@@ -11,13 +11,13 @@ export default function Home() {
         <div>
           <h1 className="text-4xl font-bold text-neutral-800">Sticky Memory</h1>
           <p className="text-neutral-500 mt-1">
-            Live guestbook — messages appear the moment they&apos;re posted.
+            リアルタイム芳名帳 — 投稿した瞬間にボードへ表示されます。
           </p>
           <Link
             href="/spotlight"
             className="inline-block mt-3 text-amber-700 font-semibold hover:underline"
           >
-            Open spotlight view →
+            スポットライト表示を開く →
           </Link>
         </div>
         <JoinBanner />

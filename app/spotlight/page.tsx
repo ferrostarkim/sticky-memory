@@ -15,7 +15,7 @@ export default function SpotlightPage() {
       <header className="flex items-center justify-between px-8 py-5">
         <h1 className="text-3xl font-bold text-amber-100">Sticky Memory</h1>
         <Link href="/" className="text-amber-200/80 hover:text-amber-100 font-medium">
-          ← Back to wall
+          ← ボードに戻る
         </Link>
       </header>
 

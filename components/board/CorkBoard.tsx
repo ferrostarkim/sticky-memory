@@ -19,14 +19,14 @@ export default function CorkBoard() {
             connected ? 'bg-green-400 animate-pulse' : 'bg-red-400'
           }`}
         />
-        {connected ? 'Live' : 'Reconnecting…'} · {memories.length}
+        {connected ? 'ライブ' : '再接続中…'} · {memories.length}
       </div>
 
       {/* Inner cork texture area containing the notes */}
       <div className="w-full h-full bg-amber-800/50 rounded-lg p-6 flex flex-wrap gap-8 justify-center items-start content-start overflow-y-auto">
         {ordered.length === 0 ? (
           <div className="w-full h-full flex items-center justify-center text-amber-100/70 text-lg">
-            Waiting for the first message…
+            最初のメッセージを待っています…
           </div>
         ) : (
           ordered.map((memory) => (

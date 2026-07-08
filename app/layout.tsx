@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sticky Memory — Live Guestbook",
-  description: "Scan, write, and watch your message appear on the board in real time.",
+  title: "Sticky Memory — リアルタイム芳名帳",
+  description: "QRから写真とメッセージを投稿すると、リアルタイムでボードに表示されます。",
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ja"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

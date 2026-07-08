@@ -8,7 +8,7 @@ export default function SubmitPage() {
         <header className="text-center mb-6">
           <h1 className="text-3xl font-bold text-neutral-800">Sticky Memory</h1>
           <p className="text-neutral-500 mt-1">
-            Leave a message on the board 🎉
+            ボードにメッセージを残そう 🎉
           </p>
         </header>
 
