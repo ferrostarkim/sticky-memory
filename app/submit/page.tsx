@@ -1,4 +1,5 @@
 import SubmitForm from '@/components/submit/SubmitForm';
+import VerseBanner from '@/components/common/VerseBanner';
 
 // Mobile-first page guests reach by scanning the QR code.
 export default function SubmitPage() {
@@ -20,6 +21,8 @@ export default function SubmitPage() {
             <SubmitForm />
           </div>
         </div>
+
+        <VerseBanner className="mt-6 px-2 animate-rise" />
       </div>
     </main>
   );

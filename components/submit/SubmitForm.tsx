@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { getSupabase, isSupabaseConfigured, PHOTO_BUCKET } from '@/lib/supabase';
 import { makeStickyStyle } from '@/lib/sticky';
+import Confetti from '@/components/common/Confetti';
 
 type Status = 'idle' | 'sending' | 'done' | 'error';
 
@@ -130,6 +131,7 @@ export default function SubmitForm() {
   if (status === 'done') {
     return (
       <div className="text-center space-y-6 py-10">
+        <Confetti />
         <div className="text-6xl animate-pop">🎉</div>
         <h2 className="font-display text-3xl font-semibold text-[var(--ink)]">ボードに表示されました！</h2>
         <p className="font-hand text-[var(--ink-soft)] text-lg">メッセージありがとうございます。</p>

@@ -8,6 +8,9 @@ interface SpotlightProps {
   memories: Memory[];
   // How long each front pair stays before the donut rotates on, in ms.
   intervalMs?: number;
+  // 'pairs': two heroes snap to the front and rotate two-at-a-time.
+  // 'carousel': the whole donut rotates continuously and smoothly.
+  mode?: 'pairs' | 'carousel';
 }
 
 // Base card footprint (px); scaled per-card for depth.
@@ -18,8 +21,13 @@ const CARD_H = 280;
 // facing the viewer. The two current notes are pulled to large hero slots at
 // the front-center; everything else fans out around the ring behind them, then
 // the ring rotates two-at-a-time so a new pair comes forward.
-export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProps) {
+export default function Spotlight({
+  memories,
+  intervalMs = 5000,
+  mode = 'pairs',
+}: SpotlightProps) {
   const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState(0);
   const [vp, setVp] = useState({ w: 1280, h: 720 });
   const n = memories.length;
 
@@ -31,8 +39,9 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
     return () => window.removeEventListener('resize', update);
   }, []);
 
+  // Pairs mode: step two-at-a-time on an interval.
   useEffect(() => {
-    if (n <= 2) {
+    if (mode !== 'pairs' || n <= 2) {
       setIndex(0);
       return;
     }
@@ -40,7 +49,25 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
       setIndex((prev) => (prev + 2) % n);
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [n, intervalMs]);
+  }, [mode, n, intervalMs]);
+
+  // Carousel mode: rotate the whole donut continuously via requestAnimationFrame.
+  useEffect(() => {
+    if (mode !== 'carousel' || n <= 2) return;
+    let raf = 0;
+    let last: number | null = null;
+    const degPerSec = 14;
+    const tick = (t: number) => {
+      if (last !== null) {
+        const prev = last;
+        setPhase((p) => (p + (degPerSec * (t - prev)) / 1000) % 360);
+      }
+      last = t;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [mode, n]);
 
   if (n === 0) {
     return (
@@ -76,25 +103,38 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
 
   const heroLeft = index;
   const heroRight = (index + 1) % n;
+  const carousel = mode === 'carousel';
 
   return (
     <div className="flex-1 relative overflow-hidden">
       {memories.map((memory, i) => {
-        const isHero = i === heroLeft || i === heroRight;
-
         let x: number;
         let y: number;
         let scale: number;
         let opacity: number;
         let zIndex: number;
+        let highlight: boolean;
 
-        if (isHero) {
+        if (carousel) {
+          // Continuous ring: everything rides the ellipse; whatever is at the
+          // front grows largest.
+          const phi = ((i * step + phase) * Math.PI) / 180;
+          const depth = Math.cos(phi);
+          const t = (depth + 1) / 2;
+          x = Rx * Math.sin(phi);
+          y = Ry * depth;
+          scale = 0.42 + 0.9 * Math.pow(t, 1.4);
+          opacity = 0.25 + 0.7 * t;
+          zIndex = 1000 + Math.round(depth * 1000);
+          highlight = depth > 0.82;
+        } else if (i === heroLeft || i === heroRight) {
           // Large, front-and-center hero slots.
           x = i === heroLeft ? -frontGap : frontGap;
           y = frontY;
           scale = frontScale;
           opacity = 1;
           zIndex = 6000 + (i === heroLeft ? 1 : 0);
+          highlight = true;
         } else {
           // Position on the elliptical ring by its angle from the front.
           const phi = ((i * step - ringRot) * Math.PI) / 180;
@@ -107,6 +147,7 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
           scale = 0.34 + 0.5 * t;
           opacity = 0.28 + 0.62 * t;
           zIndex = 1000 + Math.round(depth * 1000);
+          highlight = false;
         }
 
         return (
@@ -119,12 +160,14 @@ export default function Spotlight({ memories, intervalMs = 5000 }: SpotlightProp
               transform: `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`,
               opacity,
               zIndex,
-              transition:
-                'transform 0.9s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.9s ease',
+              // No CSS transition in carousel mode — rAF drives every frame.
+              transition: carousel
+                ? 'none'
+                : 'transform 0.9s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.9s ease',
               pointerEvents: 'none',
             }}
           >
-            <Card memory={memory} highlight={isHero} />
+            <Card memory={memory} highlight={highlight} />
           </div>
         );
       })}

@@ -1,14 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import Spotlight from '@/components/spotlight/Spotlight';
 import JoinBanner from '@/components/common/JoinBanner';
+import VerseBanner from '@/components/common/VerseBanner';
+import Cross from '@/components/common/Cross';
 import { useMemories } from '@/lib/useMemories';
 
-// Full-screen rotating display for the projector: two large notes at a time,
-// arranged on a 3D donut, on a warm theatre stage.
+// Full-screen rotating display for the projector: notes arranged on a 3D donut,
+// on a bright celebration stage. Switch between two-at-a-time and continuous.
 export default function SpotlightPage() {
   const { memories } = useMemories();
+  const [mode, setMode] = useState<'pairs' | 'carousel'>('pairs');
 
   return (
     <main className="bg-stage grain relative min-h-screen flex flex-col overflow-hidden">
@@ -26,18 +30,33 @@ export default function SpotlightPage() {
 
       <header className="relative z-20 flex items-center justify-between px-9 py-6">
         <div>
-          <p className="font-display italic text-[#c07d24] text-sm leading-none">Family Guestbook</p>
-          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)]">つくば愛クリスト教会</h1>
+          <p className="flex items-center gap-1.5 font-display italic text-[#c07d24] text-sm leading-none">
+            <Cross size={13} />
+            Family Guestbook
+          </p>
+          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)] mt-1">つくば愛クリスト教会</h1>
         </div>
-        <Link
-          href="/"
-          className="font-ui text-[#b0793a] hover:text-[#8f5f24] font-medium transition-colors"
-        >
-          ← ボードに戻る
-        </Link>
+        <div className="flex items-center gap-4">
+          {/* Auto-rotate toggle */}
+          <button
+            onClick={() => setMode((m) => (m === 'pairs' ? 'carousel' : 'pairs'))}
+            className="font-ui text-sm rounded-full px-4 py-2 border border-[#d8b483] bg-white/60 text-[#8f5f24] hover:bg-white/90 transition-colors shadow-sm"
+          >
+            {mode === 'carousel' ? '● 自動回転中' : '自動回転'}
+          </button>
+          <Link
+            href="/"
+            className="font-ui text-[#b0793a] hover:text-[#8f5f24] font-medium transition-colors"
+          >
+            ← ボードに戻る
+          </Link>
+        </div>
       </header>
 
-      <Spotlight memories={memories} />
+      <Spotlight memories={memories} mode={mode} />
+
+      {/* Verse banner */}
+      <VerseBanner className="relative z-20 pb-4" />
 
       {/* Persistent join card */}
       <div className="absolute bottom-6 right-6 z-20">
