@@ -10,7 +10,7 @@ export default function Home() {
         <div className="animate-rise">
           <p className="font-display italic text-[#c07d24] text-lg mb-0.5">Family Guestbook</p>
           <h1 className="font-ui text-4xl sm:text-5xl font-bold text-[var(--ink)] tracking-tight">
-            つくば愛クリスト協会
+            つくば愛クリスト教会
           </h1>
           <p className="font-ui text-[var(--ink-soft)] mt-2">
             投稿した瞬間に、ボードへ。みんなのメッセージが集まります。

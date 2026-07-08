@@ -7,7 +7,7 @@ export default function SubmitPage() {
       <div className="relative z-10 w-full max-w-md">
         <header className="text-center mb-6 animate-rise">
           <p className="font-display italic text-[#c07d24] text-base">Family Guestbook</p>
-          <h1 className="font-ui text-3xl font-bold text-[var(--ink)] mt-0.5">つくば愛クリスト協会</h1>
+          <h1 className="font-ui text-3xl font-bold text-[var(--ink)] mt-0.5">つくば愛クリスト教会</h1>
           <p className="font-hand text-[var(--ink-soft)] text-lg mt-1.5">
             ボードにメッセージを残そう 🎉
           </p>

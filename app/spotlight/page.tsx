@@ -27,7 +27,7 @@ export default function SpotlightPage() {
       <header className="relative z-20 flex items-center justify-between px-9 py-6">
         <div>
           <p className="font-display italic text-[#c07d24] text-sm leading-none">Family Guestbook</p>
-          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)]">つくば愛クリスト協会</h1>
+          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)]">つくば愛クリスト教会</h1>
         </div>
         <Link
           href="/"
