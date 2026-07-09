@@ -1,8 +1,15 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Memory } from '@/types/memory';
+
+// Rotation feel
+const AUTO_SPEED = 14; // degrees / second when idle
+const DRAG_SENS = 0.3; // degrees of rotation per pixel dragged
+const MAX_FLING = 320; // cap the fling velocity (deg/s)
+const RESUME_DELAY = 3500; // ms of no touch before auto-rotation resumes
+const EASE = 3; // how quickly velocity eases toward its target
 
 interface SpotlightProps {
   memories: Memory[];
@@ -31,6 +38,15 @@ export default function Spotlight({
   const [vp, setVp] = useState({ w: 1280, h: 720 });
   const n = memories.length;
 
+  // Drag/inertia state (refs so the rAF loop and pointer handlers share it
+  // without triggering re-renders).
+  const phaseRef = useRef(0);
+  const velocityRef = useRef(AUTO_SPEED); // deg/s
+  const draggingRef = useRef(false);
+  const lastXRef = useRef(0);
+  const lastMoveTimeRef = useRef(0);
+  const lastTouchRef = useRef(0); // performance.now() of last user interaction
+
   // Track viewport size so the ring scales to whatever screen it's shown on.
   useEffect(() => {
     const update = () => setVp({ w: window.innerWidth, h: window.innerHeight });
@@ -51,16 +67,24 @@ export default function Spotlight({
     return () => clearInterval(timer);
   }, [mode, n, intervalMs]);
 
-  // Carousel mode: rotate the whole donut continuously via requestAnimationFrame.
+  // Carousel mode: a single rAF loop drives rotation. When idle it eases toward
+  // the constant auto-speed; a drag overrides it, then momentum coasts and,
+  // after a short pause, auto-rotation resumes.
   useEffect(() => {
     if (mode !== 'carousel' || n <= 2) return;
+    velocityRef.current = AUTO_SPEED;
+    lastTouchRef.current = 0; // start auto-rotating immediately
     let raf = 0;
     let last: number | null = null;
-    const degPerSec = 14;
     const tick = (t: number) => {
-      if (last !== null) {
-        const prev = last;
-        setPhase((p) => (p + (degPerSec * (t - prev)) / 1000) % 360);
+      if (last !== null && !draggingRef.current) {
+        const dt = Math.min(0.05, (t - last) / 1000);
+        const idle = performance.now() - lastTouchRef.current;
+        // Target speed: 0 right after a touch (let it settle), auto-speed once idle.
+        const target = idle > RESUME_DELAY ? AUTO_SPEED : 0;
+        velocityRef.current += (target - velocityRef.current) * Math.min(1, dt * EASE);
+        phaseRef.current = (phaseRef.current + velocityRef.current * dt) % 360;
+        setPhase(phaseRef.current);
       }
       last = t;
       raf = requestAnimationFrame(tick);
@@ -68,6 +92,48 @@ export default function Spotlight({
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [mode, n]);
+
+  const carouselActive = mode === 'carousel' && n > 2;
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!carouselActive) return;
+    draggingRef.current = true;
+    velocityRef.current = 0;
+    lastXRef.current = e.clientX;
+    lastMoveTimeRef.current = performance.now();
+    lastTouchRef.current = performance.now();
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      // ignore (e.g. synthetic events)
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!carouselActive || !draggingRef.current) return;
+    const now = performance.now();
+    const dx = e.clientX - lastXRef.current;
+    const dt = Math.max(1, now - lastMoveTimeRef.current) / 1000;
+    const dPhase = dx * DRAG_SENS;
+    phaseRef.current = (phaseRef.current + dPhase) % 360;
+    setPhase(phaseRef.current);
+    // Track velocity for a natural release fling.
+    velocityRef.current = Math.max(-MAX_FLING, Math.min(MAX_FLING, dPhase / dt));
+    lastXRef.current = e.clientX;
+    lastMoveTimeRef.current = now;
+    lastTouchRef.current = now;
+  };
+
+  const endDrag = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    lastTouchRef.current = performance.now();
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
 
   if (n === 0) {
     return (
@@ -106,7 +172,16 @@ export default function Spotlight({
   const carousel = mode === 'carousel';
 
   return (
-    <div className="flex-1 relative overflow-hidden">
+    <div
+      className={`flex-1 relative overflow-hidden select-none ${
+        carouselActive ? 'cursor-grab active:cursor-grabbing' : ''
+      }`}
+      style={carouselActive ? { touchAction: 'none' } : undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+    >
       {memories.map((memory, i) => {
         let x: number;
         let y: number;

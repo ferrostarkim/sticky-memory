@@ -55,6 +55,13 @@ export default function SpotlightPage() {
 
       <Spotlight memories={memories} mode={mode} />
 
+      {/* Drag hint (carousel only) */}
+      {mode === 'carousel' && (
+        <div className="absolute bottom-6 left-6 z-20 font-ui text-sm text-[#a4712a]/80 flex items-center gap-1.5">
+          <span aria-hidden>🖐️</span> ドラッグで回せます
+        </div>
+      )}
+
       {/* Verse banner */}
       <VerseBanner className="relative z-20 pb-4" />
 
