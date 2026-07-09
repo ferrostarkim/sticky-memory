@@ -13,9 +13,10 @@ interface Processed {
   blob: Blob; // for uploading to Storage
 }
 
-// Downscale a chosen image to a max dimension and re-encode as JPEG so uploads
-// stay small and fast. Honors EXIF orientation.
-async function processImage(file: File, max = 1000, quality = 0.72): Promise<Processed> {
+// Downscale a chosen image to a max dimension and re-encode as JPEG. 1600px /
+// 0.82 keeps photos crisp on a projector while staying well under Supabase's
+// per-file limit (~0.6-1 MB each). Honors EXIF orientation.
+async function processImage(file: File, max = 1600, quality = 0.82): Promise<Processed> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
