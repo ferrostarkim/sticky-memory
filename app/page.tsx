@@ -15,7 +15,7 @@ export default function Home() {
             Family Guestbook
           </p>
           <h1 className="font-ui text-4xl sm:text-5xl font-bold text-[var(--ink)] tracking-tight">
-            つくば愛クリスト教会
+            つくばキリストの愛教会
           </h1>
           <p className="font-ui text-[var(--ink-soft)] mt-2">
             投稿した瞬間に、ボードへ。みんなのメッセージが集まります。

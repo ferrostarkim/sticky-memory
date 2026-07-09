@@ -34,7 +34,7 @@ export default function SpotlightPage() {
             <Cross size={13} />
             Family Guestbook
           </p>
-          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)] mt-1">つくば愛クリスト教会</h1>
+          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)] mt-1">つくばキリストの愛教会</h1>
         </div>
         <div className="flex items-center gap-4">
           {/* Auto-rotate toggle */}

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "つくば愛クリスト教会 — 芳名帳",
+  title: "つくばキリストの愛教会 — 芳名帳",
   description: "QRから写真とメッセージを投稿すると、リアルタイムでボードに表示されます。",
 };
 
