@@ -23,6 +23,9 @@
 # runtime guestbook data (submitted memories)
 /.data/
 
+# exported guestbook data (npm run export)
+/export-data/
+
 # misc
 .DS_Store
 *.pem
