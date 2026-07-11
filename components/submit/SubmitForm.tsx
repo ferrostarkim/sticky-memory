@@ -183,7 +183,6 @@ export default function SubmitForm() {
         <input
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleFile}
           className="font-ui block w-full text-sm text-[var(--ink-soft)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--gold)]/15 file:px-4 file:py-2 file:font-medium file:text-[#a4712a] hover:file:bg-[var(--gold)]/25 file:transition"
         />
