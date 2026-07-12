@@ -13,7 +13,6 @@ import { Memory } from '@/types/memory';
 // on a bright celebration stage. Switch between two-at-a-time and continuous.
 export default function SpotlightPage() {
   const { memories } = useMemories();
-  const [mode, setMode] = useState<'pairs' | 'carousel'>('pairs');
   const [selected, setSelected] = useState<Memory | null>(null);
 
   return (
@@ -35,31 +34,20 @@ export default function SpotlightPage() {
           <p className="font-hand text-[#c07d24] text-sm leading-none">思い出の寄せ書き</p>
           <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)] mt-1">クロスミッションクリスチャンスクール</h1>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Auto-rotate toggle */}
-          <button
-            onClick={() => setMode((m) => (m === 'pairs' ? 'carousel' : 'pairs'))}
-            className="font-ui text-sm rounded-full px-4 py-2 border border-[#d8b483] bg-white/60 text-[#8f5f24] hover:bg-white/90 transition-colors shadow-sm"
-          >
-            {mode === 'carousel' ? '● 自動回転中' : '自動回転'}
-          </button>
-          <Link
-            href="/"
-            className="font-ui text-[#b0793a] hover:text-[#8f5f24] font-medium transition-colors"
-          >
-            ← ボードに戻る
-          </Link>
-        </div>
+        <Link
+          href="/"
+          className="font-ui text-[#b0793a] hover:text-[#8f5f24] font-medium transition-colors"
+        >
+          ← ボードに戻る
+        </Link>
       </header>
 
-      <Spotlight memories={memories} mode={mode} onSelect={setSelected} />
+      <Spotlight memories={memories} mode="carousel" onSelect={setSelected} />
 
-      {/* Drag hint (carousel only) */}
-      {mode === 'carousel' && (
-        <div className="absolute bottom-6 left-6 z-20 font-ui text-sm text-[#a4712a]/80 flex items-center gap-1.5">
-          <span aria-hidden>🖐️</span> ドラッグで回せます
-        </div>
-      )}
+      {/* Drag hint */}
+      <div className="absolute bottom-6 left-6 z-20 font-ui text-sm text-[#a4712a]/80 flex items-center gap-1.5">
+        <span aria-hidden>🖐️</span> ドラッグで回せます
+      </div>
 
       {/* Verse banner */}
       <VerseBanner className="relative z-20 pb-4" />
