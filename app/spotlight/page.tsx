@@ -5,13 +5,16 @@ import { useState } from 'react';
 import Spotlight from '@/components/spotlight/Spotlight';
 import JoinBanner from '@/components/common/JoinBanner';
 import VerseBanner from '@/components/common/VerseBanner';
+import Lightbox from '@/components/common/Lightbox';
 import { useMemories } from '@/lib/useMemories';
+import { Memory } from '@/types/memory';
 
 // Full-screen rotating display for the projector: notes arranged on a 3D donut,
 // on a bright celebration stage. Switch between two-at-a-time and continuous.
 export default function SpotlightPage() {
   const { memories } = useMemories();
   const [mode, setMode] = useState<'pairs' | 'carousel'>('pairs');
+  const [selected, setSelected] = useState<Memory | null>(null);
 
   return (
     <main className="bg-stage grain relative min-h-screen flex flex-col overflow-hidden">
@@ -49,7 +52,7 @@ export default function SpotlightPage() {
         </div>
       </header>
 
-      <Spotlight memories={memories} mode={mode} />
+      <Spotlight memories={memories} mode={mode} onSelect={setSelected} />
 
       {/* Drag hint (carousel only) */}
       {mode === 'carousel' && (
@@ -65,6 +68,8 @@ export default function SpotlightPage() {
       <div className="absolute bottom-6 right-6 z-20">
         <JoinBanner size={104} />
       </div>
+
+      {selected && <Lightbox memory={selected} onClose={() => setSelected(null)} />}
     </main>
   );
 }

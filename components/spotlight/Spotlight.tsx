@@ -18,6 +18,8 @@ interface SpotlightProps {
   // 'pairs': two heroes snap to the front and rotate two-at-a-time.
   // 'carousel': the whole donut rotates continuously and smoothly.
   mode?: 'pairs' | 'carousel';
+  // Called when a note is tapped/clicked (as opposed to dragged).
+  onSelect?: (memory: Memory) => void;
 }
 
 // Base card footprint (px); scaled per-card for depth.
@@ -32,6 +34,7 @@ export default function Spotlight({
   memories,
   intervalMs = 5000,
   mode = 'pairs',
+  onSelect,
 }: SpotlightProps) {
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState(0);
@@ -46,6 +49,10 @@ export default function Spotlight({
   const lastXRef = useRef(0);
   const lastMoveTimeRef = useRef(0);
   const lastTouchRef = useRef(0); // performance.now() of last user interaction
+  // Tap detection (to tell a click-to-enlarge apart from a drag-to-rotate).
+  const downXRef = useRef(0);
+  const downYRef = useRef(0);
+  const tappedIdRef = useRef<string | null>(null);
 
   // Track viewport size so the ring scales to whatever screen it's shown on.
   useEffect(() => {
@@ -96,6 +103,12 @@ export default function Spotlight({
   const carouselActive = mode === 'carousel' && n > 2;
 
   const onPointerDown = (e: React.PointerEvent) => {
+    // Record where the press started + which note it landed on, for tap detection.
+    downXRef.current = e.clientX;
+    downYRef.current = e.clientY;
+    const el = (e.target as HTMLElement)?.closest?.('[data-memory-id]') as HTMLElement | null;
+    tappedIdRef.current = el?.dataset.memoryId ?? null;
+
     if (!carouselActive) return;
     draggingRef.current = true;
     velocityRef.current = 0;
@@ -124,15 +137,36 @@ export default function Spotlight({
     lastTouchRef.current = now;
   };
 
-  const endDrag = (e: React.PointerEvent) => {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    lastTouchRef.current = performance.now();
-    try {
-      e.currentTarget.releasePointerCapture?.(e.pointerId);
-    } catch {
-      // ignore
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (draggingRef.current) {
+      draggingRef.current = false;
+      lastTouchRef.current = performance.now();
+      try {
+        e.currentTarget.releasePointerCapture?.(e.pointerId);
+      } catch {
+        // ignore
+      }
     }
+    // A press that barely moved is a tap → enlarge the note that was pressed.
+    const dist = Math.hypot(e.clientX - downXRef.current, e.clientY - downYRef.current);
+    if (dist < 8 && tappedIdRef.current && onSelect) {
+      const m = memories.find((mm) => mm.id === tappedIdRef.current);
+      if (m) onSelect(m);
+    }
+    tappedIdRef.current = null;
+  };
+
+  const onPointerCancel = (e: React.PointerEvent) => {
+    if (draggingRef.current) {
+      draggingRef.current = false;
+      lastTouchRef.current = performance.now();
+      try {
+        e.currentTarget.releasePointerCapture?.(e.pointerId);
+      } catch {
+        // ignore
+      }
+    }
+    tappedIdRef.current = null;
   };
 
   if (n === 0) {
@@ -148,7 +182,11 @@ export default function Spotlight({
     return (
       <div className="flex-1 flex items-center justify-center gap-12 p-8">
         {memories.map((memory) => (
-          <div key={memory.id} style={{ width: CARD_W * 1.25, height: CARD_H * 1.25 }}>
+          <div
+            key={memory.id}
+            style={{ width: CARD_W * 1.25, height: CARD_H * 1.25, cursor: 'zoom-in' }}
+            onClick={() => onSelect?.(memory)}
+          >
             <Card memory={memory} highlight />
           </div>
         ))}
@@ -179,8 +217,8 @@ export default function Spotlight({
       style={carouselActive ? { touchAction: 'none' } : undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
       {memories.map((memory, i) => {
         let x: number;
@@ -228,6 +266,7 @@ export default function Spotlight({
         return (
           <div
             key={memory.id}
+            data-memory-id={memory.id}
             className="absolute left-1/2 top-1/2"
             style={{
               width: CARD_W,
@@ -239,7 +278,11 @@ export default function Spotlight({
               transition: carousel
                 ? 'none'
                 : 'transform 0.9s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.9s ease',
-              pointerEvents: 'none',
+              // Cards receive pointer events so taps land; the container still
+              // gets them via bubbling (and pointer capture) for dragging.
+              pointerEvents: 'auto',
+              touchAction: carousel ? 'none' : undefined,
+              cursor: 'zoom-in',
             }}
           >
             <Card memory={memory} highlight={highlight} />
