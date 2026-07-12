@@ -28,7 +28,7 @@ export default function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-black/70 backdrop-blur-sm cursor-zoom-out animate-fade"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 bg-black/75 backdrop-blur-sm cursor-zoom-out animate-fade"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

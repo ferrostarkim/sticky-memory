@@ -54,13 +54,22 @@ export default function Spotlight({
   const downYRef = useRef(0);
   const tappedIdRef = useRef<string | null>(null);
 
-  // Track viewport size so the ring scales to whatever screen it's shown on.
+  // Measure the ring's own area (not the whole window) so cards fit between the
+  // header and the footer without being clipped.
+  const containerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    const update = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    const update = () => {
+      const el = containerRef.current;
+      setVp(
+        el && el.clientHeight > 0
+          ? { w: el.clientWidth, h: el.clientHeight }
+          : { w: window.innerWidth, h: window.innerHeight }
+      );
+    };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, []);
+  }, [n]);
 
   // Pairs mode: step two-at-a-time on an interval.
   useEffect(() => {
@@ -198,12 +207,22 @@ export default function Spotlight({
   // Rotate the ring so the current pair straddles the front (angle 0).
   const ringRot = index * step + step / 2;
 
-  // Ellipse radii + the two hero slots at the front (bottom) of the ring.
-  const Rx = vp.w * 0.32;
-  const Ry = vp.h * 0.3;
+  // --- Ellipse geometry, sized so nothing clips ------------------------------
+  const frontScale = 1.22; // largest (front) card
+  const backScale = 0.42; // smallest (far back) card
+  const margin = 20;
+  const cardHalf = (CARD_H * frontScale) / 2;
+  const backHalf = (CARD_H * backScale) / 2;
+  // Shift the whole ring up so the big front card and the small back card use
+  // the available height symmetrically; then the max vertical radius that fits.
+  const shiftUp = (cardHalf - backHalf) / 2;
+  const ryFit = vp.h / 2 - margin - (cardHalf + backHalf) / 2;
+  const Ry = Math.max(96, Math.min(vp.h * 0.34, ryFit));
+  const Rx = Math.min(vp.w * 0.32, vp.w / 2 - CARD_W * 0.6);
+
+  // Hero slots (pairs mode)
   const frontGap = Math.min(vp.w * 0.17, 250);
   const frontY = Ry * 0.72;
-  const frontScale = 1.3;
 
   const heroLeft = index;
   const heroRight = (index + 1) % n;
@@ -211,6 +230,7 @@ export default function Spotlight({
 
   return (
     <div
+      ref={containerRef}
       className={`flex-1 relative overflow-hidden select-none ${
         carouselActive ? 'cursor-grab active:cursor-grabbing' : ''
       }`}
@@ -235,15 +255,15 @@ export default function Spotlight({
           const depth = Math.cos(phi);
           const t = (depth + 1) / 2;
           x = Rx * Math.sin(phi);
-          y = Ry * depth;
-          scale = 0.42 + 0.9 * Math.pow(t, 1.4);
+          y = Ry * depth - shiftUp;
+          scale = backScale + (frontScale - backScale) * Math.pow(t, 1.4);
           opacity = 0.25 + 0.7 * t;
           zIndex = 1000 + Math.round(depth * 1000);
           highlight = depth > 0.82;
         } else if (i === heroLeft || i === heroRight) {
           // Large, front-and-center hero slots.
           x = i === heroLeft ? -frontGap : frontGap;
-          y = frontY;
+          y = frontY - shiftUp;
           scale = frontScale;
           opacity = 1;
           zIndex = 6000 + (i === heroLeft ? 1 : 0);
@@ -256,7 +276,7 @@ export default function Spotlight({
           x = Rx * Math.sin(phi);
           // Front notes sit low (near the heroes); far-back notes ride up to
           // form the top of the donut. Positive Y is downward.
-          y = Ry * depth;
+          y = Ry * depth - shiftUp;
           scale = 0.34 + 0.5 * t;
           opacity = 0.28 + 0.62 * t;
           zIndex = 1000 + Math.round(depth * 1000);
