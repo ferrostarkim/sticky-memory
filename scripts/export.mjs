@@ -139,7 +139,7 @@ function buildBoardHtml(rows) {
   return `<!doctype html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>つくばキリストの愛教会 — 芳名帳</title>
+<title>クロスミッションクリスチャンスクール — 芳名帳</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -169,7 +169,7 @@ function buildBoardHtml(rows) {
 </style></head>
 <body>
   <header>
-    <h1>つくばキリストの愛教会 — 芳名帳</h1>
+    <h1>クロスミッションクリスチャンスクール — 芳名帳</h1>
     <p>${rows.length} 件のメッセージ</p>
   </header>
   <div class="board">

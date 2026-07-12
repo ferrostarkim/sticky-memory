@@ -5,7 +5,6 @@ import { useState } from 'react';
 import Spotlight from '@/components/spotlight/Spotlight';
 import JoinBanner from '@/components/common/JoinBanner';
 import VerseBanner from '@/components/common/VerseBanner';
-import Cross from '@/components/common/Cross';
 import { useMemories } from '@/lib/useMemories';
 
 // Full-screen rotating display for the projector: notes arranged on a 3D donut,
@@ -30,11 +29,8 @@ export default function SpotlightPage() {
 
       <header className="relative z-20 flex items-center justify-between px-9 py-6">
         <div>
-          <p className="flex items-center gap-1.5 font-display italic text-[#c07d24] text-sm leading-none">
-            <Cross size={13} />
-            Family Guestbook
-          </p>
-          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)] mt-1">つくばキリストの愛教会</h1>
+          <p className="font-hand text-[#c07d24] text-sm leading-none">思い出の寄せ書き</p>
+          <h1 className="font-ui text-2xl sm:text-3xl font-bold text-[var(--ink)] mt-1">クロスミッションクリスチャンスクール</h1>
         </div>
         <div className="flex items-center gap-4">
           {/* Auto-rotate toggle */}
