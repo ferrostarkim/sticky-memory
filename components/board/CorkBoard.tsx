@@ -1,10 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import StickyNote from '@/components/sticky/StickyNote';
+import Lightbox from '@/components/common/Lightbox';
 import { useMemories } from '@/lib/useMemories';
+import { Memory } from '@/types/memory';
 
 export default function CorkBoard() {
   const { memories, connected } = useMemories();
+  const [selected, setSelected] = useState<Memory | null>(null);
 
   // Newest notes first so fresh submissions land at the top-left of the wall.
   const ordered = [...memories].reverse();
@@ -36,7 +40,16 @@ export default function CorkBoard() {
             ordered.map((memory) => (
               <div
                 key={memory.id}
-                className="animate-pop transition-transform duration-300 hover:-translate-y-1.5 hover:rotate-0"
+                className="animate-pop transition-transform duration-300 hover:-translate-y-1.5 hover:rotate-0 cursor-zoom-in"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelected(memory)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelected(memory);
+                  }
+                }}
               >
                 <StickyNote memory={memory} />
               </div>
@@ -44,6 +57,8 @@ export default function CorkBoard() {
           )}
         </div>
       </div>
+
+      {selected && <Lightbox memory={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
