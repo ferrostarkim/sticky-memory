@@ -1223,6 +1223,38 @@ body {
   font-size: 0.5rem;
 }
 
+.camp-memory-ribbon-title button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: fit-content;
+  margin-top: 0.45rem;
+  padding: 0.3rem 0.52rem;
+  border: 1px solid rgba(116,93,142,0.16);
+  border-radius: 999px;
+  color: #745f7d;
+  background: rgba(255,255,255,0.58);
+  font-family: var(--font-ui);
+  font-size: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.camp-memory-ribbon-title button:hover {
+  color: #fffaf0;
+  background: #9277a4;
+}
+
+.camp-memory-ribbon-title button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.camp-memory-ribbon-title button b {
+  font-size: 0.72rem;
+}
+
 .camp-memory-ribbon-track {
   display: flex;
   gap: 0.62rem;
@@ -1252,6 +1284,60 @@ body {
   font-family: var(--font-hand);
   text-align: left;
   scroll-snap-align: start;
+}
+
+.camp-ribbon-note:first-child {
+  box-shadow:
+    0 7px 17px rgba(83,64,65,0.16),
+    0 0 0 2px rgba(151,122,165,0.2);
+}
+
+.camp-ribbon-note:first-child::after {
+  content: 'NEXT';
+  position: absolute;
+  top: 0.38rem;
+  right: 0.38rem;
+  padding: 0.12rem 0.28rem;
+  border-radius: 999px;
+  color: #fffaf0;
+  background: #9277a4;
+  font-family: var(--font-ui);
+  font-size: 0.38rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.camp-memory-ribbon[data-paused='true'] .camp-memory-ribbon-title > span::after {
+  content: ' · PAUSED';
+  color: #c17f70;
+}
+
+.camp-memory-ribbon[data-shifting='true'] .camp-memory-ribbon-track {
+  pointer-events: none;
+  animation: memory-queue-shift 680ms cubic-bezier(0.55, 0, 0.2, 1) both;
+}
+
+.camp-canvas[data-shifting='true'] .camp-memory-slot-0 {
+  animation: memory-stage-leave 680ms cubic-bezier(0.55, 0, 0.2, 1) both;
+}
+
+.camp-memory-slot-5 {
+  animation: memory-stage-arrive 720ms cubic-bezier(0.2, 1.25, 0.35, 1) both;
+}
+
+@keyframes memory-queue-shift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-146px); }
+}
+
+@keyframes memory-stage-leave {
+  0% { opacity: 1; transform: scale(1) rotate(-1deg); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.72) rotate(-6deg); }
+}
+
+@keyframes memory-stage-arrive {
+  from { opacity: 0; transform: translateY(14px) scale(0.65) rotate(5deg); }
+  to { opacity: 1; transform: rotate(-1deg); }
 }
 
 .camp-ribbon-note::before {
@@ -1381,6 +1467,12 @@ body {
     margin-top: 0.42rem;
     color: #a08d8d;
     font-size: 0.48rem;
+  }
+
+  .camp-memory-ribbon-title button {
+    margin-top: 0.32rem;
+    padding: 0.24rem 0.42rem;
+    font-size: 0.44rem;
   }
 
   .camp-memory-ribbon-track {

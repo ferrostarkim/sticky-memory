@@ -15,6 +15,7 @@ import { Memory } from '@/types/memory';
 interface CampCanvasProps {
   memories: Memory[];
   spotlight: boolean;
+  shifting?: boolean;
   onSelect: (memory: Memory) => void;
 }
 
@@ -91,9 +92,18 @@ const HEART_SHAPE = (() => {
   return heart;
 })();
 
-export default function CampCanvas({ memories, spotlight, onSelect }: CampCanvasProps) {
+export default function CampCanvas({
+  memories,
+  spotlight,
+  shifting = false,
+  onSelect,
+}: CampCanvasProps) {
   return (
-    <div className="camp-canvas" aria-label="3Dキャンプ場の思い出ボード">
+    <div
+      className="camp-canvas"
+      data-shifting={shifting}
+      aria-label="3Dキャンプ場の思い出ボード"
+    >
       <Canvas
         dpr={[0.9, 1.35]}
         camera={{ position: [12, 12, 16], fov: 35, near: 0.1, far: 100 }}
@@ -534,6 +544,7 @@ function MemoryVillage({
             memory={memory}
             position={[baseX, 0.82, baseZ]}
             newest={memory.id === newestId}
+            slot={index}
             compact={compact}
             onSelect={onSelect}
           />
@@ -547,12 +558,14 @@ function MemoryPin({
   memory,
   position,
   newest,
+  slot,
   compact,
   onSelect,
 }: {
   memory: Memory;
   position: [number, number, number];
   newest: boolean;
+  slot: number;
   compact: boolean;
   onSelect: (memory: Memory) => void;
 }) {
@@ -589,7 +602,7 @@ function MemoryPin({
         >
           <button
             type="button"
-            className={`camp-memory-note ${newest ? 'camp-memory-note-new' : ''}`}
+            className={`camp-memory-note camp-memory-slot-${slot} ${newest ? 'camp-memory-note-new' : ''}`}
             style={{ backgroundColor: color }}
             onClick={(event) => {
               event.stopPropagation();
