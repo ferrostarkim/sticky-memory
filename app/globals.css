@@ -740,3 +740,342 @@ body {
     animation: none;
   }
 }
+
+/* ---- Pastel toy-diorama art direction ------------------------------------ */
+.camp-shell {
+  --camp-cream: #4f3f52;
+  --camp-mint: #718b68;
+  --camp-orange: #cf8f70;
+  --camp-panel: rgba(255, 250, 239, 0.82);
+  color: #4f3f52;
+  background: #f8f0dd;
+}
+
+.camp-sky {
+  background:
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.95), transparent 28%),
+    radial-gradient(circle at 84% 12%, rgba(225, 202, 221, 0.38), transparent 26%),
+    linear-gradient(145deg, #fffaf0 0%, #f4ead8 64%, #eee1cf 100%);
+}
+
+.camp-sky::after {
+  opacity: 0.2;
+  background-image:
+    radial-gradient(circle, rgba(132, 111, 145, 0.22) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(130, 156, 112, 0.22) 0 1px, transparent 1.5px);
+  background-size: 72px 72px, 113px 113px;
+  mask-image: radial-gradient(ellipse at center, black, transparent 74%);
+}
+
+.camp-canvas {
+  inset: clamp(4.8rem, 9vw, 7.5rem) 0 0;
+  filter: saturate(0.96);
+}
+
+.camp-header {
+  align-items: flex-start;
+  padding: clamp(1.1rem, 2.5vw, 2rem) clamp(1.25rem, 4vw, 4rem);
+}
+
+.camp-brand {
+  max-width: 540px;
+  padding-left: 0;
+  filter: none;
+}
+
+.camp-brand::before {
+  display: none;
+}
+
+.camp-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.48rem;
+  padding: 0.36rem 0.64rem;
+  border: 1px solid rgba(116, 93, 142, 0.16);
+  border-radius: 999px;
+  color: #755f89;
+  background: rgba(255, 253, 247, 0.7);
+  box-shadow: 0 5px 20px rgba(105, 78, 80, 0.08);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+}
+
+.camp-kicker::before {
+  content: '✦';
+  color: #c58b6f;
+  font-size: 0.72rem;
+}
+
+.camp-brand h1 {
+  color: #59485d;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.camp-brand h1 span {
+  color: #8b758d;
+  font-size: clamp(0.75rem, 1vw, 0.92rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.camp-brand h1 strong {
+  font-family: var(--font-ui);
+  font-size: clamp(1.85rem, 3.7vw, 3.75rem);
+  font-weight: 700;
+}
+
+.camp-location {
+  margin-top: 0.5rem;
+  color: #917f79;
+  font-size: clamp(0.64rem, 0.86vw, 0.78rem);
+  font-weight: 500;
+}
+
+.camp-live {
+  border: 1px solid rgba(116, 93, 142, 0.16);
+  color: #6c5974;
+  background: rgba(255, 252, 244, 0.86);
+  box-shadow: 0 12px 32px rgba(107, 83, 82, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.camp-live b {
+  color: #6b5674;
+}
+
+.camp-live small {
+  color: #a28d9c;
+}
+
+.camp-live > span {
+  background: #d68b79;
+  box-shadow: 0 0 0 4px rgba(214, 139, 121, 0.14);
+}
+
+.camp-live[data-connected='true'] > span {
+  background: #82a474;
+  box-shadow: 0 0 0 4px rgba(130, 164, 116, 0.16);
+}
+
+.camp-link-button {
+  border: 1px solid rgba(116, 93, 142, 0.16);
+  color: #69546f;
+  background: rgba(255, 252, 244, 0.86);
+  box-shadow: 0 12px 32px rgba(107, 83, 82, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.camp-link-button:hover {
+  color: #fffaf0;
+  background: #8d73a0;
+  box-shadow: 0 14px 28px rgba(116, 93, 142, 0.24);
+}
+
+.camp-link-button span {
+  color: #bf876c;
+}
+
+.camp-instructions {
+  border: 1px solid rgba(116, 93, 142, 0.14);
+  color: #66556d;
+  background: rgba(255, 252, 244, 0.88);
+  box-shadow: 0 12px 34px rgba(107, 83, 82, 0.13);
+  backdrop-filter: blur(18px);
+}
+
+.camp-instructions-icon {
+  color: #fffaf0;
+  background: #9c82ad;
+  box-shadow: inset 0 1px rgba(255,255,255,0.35);
+}
+
+.camp-instructions div span {
+  color: #9b888c;
+}
+
+.camp-join-desktop {
+  filter: drop-shadow(0 16px 28px rgba(103, 78, 78, 0.18));
+}
+
+.camp-join-desktop .paper,
+.camp-join-compact .paper {
+  border: 1px solid rgba(116, 93, 142, 0.13);
+  background: #fffaf0;
+}
+
+.camp-lodge-label {
+  min-width: 150px;
+  padding: 0.48rem 0.65rem;
+  border: 2px solid rgba(255,255,255,0.75);
+  border-radius: 999px;
+  color: #66516c;
+  background: rgba(255, 248, 232, 0.9);
+  box-shadow: 0 8px 20px rgba(92, 69, 69, 0.13);
+  backdrop-filter: blur(9px);
+}
+
+.camp-lodge-label span {
+  color: #98799f;
+  font-size: 0.42rem;
+}
+
+.camp-lodge-label strong {
+  color: #66516c;
+  font-size: 0.72rem;
+}
+
+.camp-welcome-sign {
+  width: 118px;
+  color: #66516c;
+  text-align: center;
+  font-family: var(--font-ui);
+  line-height: 1.05;
+  pointer-events: none;
+}
+
+.camp-welcome-sign span {
+  display: block;
+  color: #9a7da1;
+  font-size: 0.35rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.camp-welcome-sign strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.46rem;
+  white-space: nowrap;
+}
+
+.camp-memory-bubble {
+  position: relative;
+  min-width: 42px;
+  max-width: 82px;
+  padding: 0.26rem 0.48rem;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.92);
+  border-radius: 999px;
+  color: #6a576d;
+  background: rgba(255, 249, 237, 0.94);
+  box-shadow: 0 6px 16px rgba(88, 67, 73, 0.15);
+  font-family: var(--font-ui);
+  font-size: 0.46rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.camp-memory-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(255,255,255,0.92);
+  border-bottom: 2px solid rgba(255,255,255,0.92);
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.camp-memory-bubble:hover,
+.camp-memory-bubble:focus-visible {
+  outline: none;
+  color: #fffaf0;
+  background: #9378a5;
+  transform: translateY(-3px) scale(1.08);
+}
+
+.camp-memory-bubble-new {
+  animation: bubble-pop 800ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+}
+
+@keyframes bubble-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.4); }
+  to { opacity: 1; transform: none; }
+}
+
+.camp-loading {
+  color: #806b83;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(202, 180, 214, 0.4), transparent 20%),
+    #f8f0dd;
+}
+
+.camp-loading-flame {
+  background: linear-gradient(145deg, #f1d08a, #d58b72);
+}
+
+.camp-spotlight-footer {
+  color: #59485d;
+  text-shadow: none;
+}
+
+.camp-spotlight-footer > :first-child .font-hand {
+  color: #806f79;
+}
+
+.camp-edge {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .camp-canvas {
+    inset: 7.7rem 0 3.8rem;
+  }
+
+  .camp-header {
+    gap: 0.7rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .camp-brand h1 strong {
+    font-size: clamp(1.65rem, 7.8vw, 2.3rem);
+  }
+
+  .camp-kicker {
+    padding: 0.28rem 0.48rem;
+    font-size: 0.48rem;
+  }
+
+  .camp-location {
+    max-width: 190px;
+    font-size: 0.58rem;
+  }
+
+  .camp-live,
+  .camp-link-button {
+    background: rgba(255, 252, 244, 0.9);
+  }
+
+  .camp-instructions {
+    bottom: 4.9rem;
+  }
+
+  .camp-mobile-submit {
+    border: 1px solid rgba(116, 93, 142, 0.2);
+    border-radius: 999px;
+    color: #fffaf0;
+    background: linear-gradient(135deg, #8b729e, #a78ab5);
+    box-shadow: 0 12px 28px rgba(103, 77, 111, 0.25);
+  }
+
+  .camp-memory-bubble {
+    max-width: 62px;
+    padding: 0.2rem 0.38rem;
+    font-size: 0.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camp-memory-bubble-new {
+    animation: none;
+  }
+}
