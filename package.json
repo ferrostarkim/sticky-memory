@@ -10,12 +10,15 @@
     "export": "node scripts/export.mjs"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@supabase/supabase-js": "^2.110.1",
     "@types/qrcode": "^1.5.6",
-    "next": "16.2.10",
+    "next": "^16.2.12",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

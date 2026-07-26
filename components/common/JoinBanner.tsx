@@ -1,21 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import QrCode from '@/components/common/QrCode';
 
 interface JoinBannerProps {
   size?: number;
 }
 
+const subscribeToOrigin = () => () => {};
+
 // A little paper "join" card: QR + short instruction. The absolute URL is
 // derived from the browser location so it works on whatever host the display
 // is served from.
 export default function JoinBanner({ size = 116 }: JoinBannerProps) {
-  const [url, setUrl] = useState('');
-
-  useEffect(() => {
-    setUrl(`${window.location.origin}/submit`);
-  }, []);
+  const url = useSyncExternalStore(
+    subscribeToOrigin,
+    () => `${window.location.origin}/submit`,
+    () => ''
+  );
 
   return (
     <div className="paper bg-[var(--cream)] rounded-lg px-4 py-3 flex items-center gap-4">
