@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import JoinBanner from '@/components/common/JoinBanner';
 import Lightbox from '@/components/common/Lightbox';
 import VerseBanner from '@/components/common/VerseBanner';
@@ -42,20 +42,77 @@ const DEV_PREVIEW_MEMORIES: Memory[] = [
 export default function CampExperience({ spotlight = false }: CampExperienceProps) {
   const { memories, connected } = useMemories();
   const [selected, setSelected] = useState<Memory | null>(null);
+  const [stageOffset, setStageOffset] = useState(0);
+  const [shifting, setShifting] = useState(false);
+  const [queuePaused, setQueuePaused] = useState(false);
+  const shiftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewing = process.env.NODE_ENV === 'development' && !isSupabaseConfigured;
   const displayMemories = previewing ? DEV_PREVIEW_MEMORIES : memories;
   const visibleMemories = useMemo(() => displayMemories.slice(-36), [displayMemories]);
+  const normalizedOffset = visibleMemories.length
+    ? stageOffset % visibleMemories.length
+    : 0;
+  const stageMemories = useMemo(() => {
+    const count = Math.min(6, visibleMemories.length);
+    return Array.from(
+      { length: count },
+      (_, index) =>
+        visibleMemories[(normalizedOffset + index) % visibleMemories.length]
+    );
+  }, [normalizedOffset, visibleMemories]);
+  const queuedMemories = useMemo(() => {
+    if (visibleMemories.length <= 6) return [];
+    return Array.from(
+      { length: visibleMemories.length - 6 },
+      (_, index) =>
+        visibleMemories[
+          (normalizedOffset + 6 + index) % visibleMemories.length
+        ]
+    );
+  }, [normalizedOffset, visibleMemories]);
+
+  const shiftQueue = useCallback(() => {
+    if (visibleMemories.length <= 6 || shifting) return;
+    setShifting(true);
+    shiftTimer.current = setTimeout(() => {
+      setStageOffset((current) => current + 1);
+      setShifting(false);
+      shiftTimer.current = null;
+    }, 680);
+  }, [shifting, visibleMemories.length]);
+
+  useEffect(() => {
+    if (queuePaused || selected || visibleMemories.length <= 6) return;
+    const interval = setInterval(shiftQueue, 5200);
+    return () => clearInterval(interval);
+  }, [queuePaused, selected, shiftQueue, visibleMemories.length]);
+
+  useEffect(
+    () => () => {
+      if (shiftTimer.current) clearTimeout(shiftTimer.current);
+    },
+    []
+  );
 
   return (
     <main className={`camp-shell ${spotlight ? 'camp-shell-spotlight' : ''}`}>
       <div className="camp-sky" aria-hidden />
       <CampCanvas
-        memories={visibleMemories}
+        memories={stageMemories}
         spotlight={spotlight}
+        shifting={shifting}
         onSelect={setSelected}
       />
       {!spotlight && (
-        <MemoryRibbon memories={visibleMemories} onSelect={setSelected} />
+        <MemoryRibbon
+          memories={queuedMemories}
+          totalCount={visibleMemories.length}
+          shifting={shifting}
+          paused={queuePaused || Boolean(selected)}
+          onShift={shiftQueue}
+          onPauseChange={setQueuePaused}
+          onSelect={setSelected}
+        />
       )}
 
       <header className="camp-header">
@@ -134,19 +191,48 @@ const RIBBON_COLORS: Record<string, string> = {
 
 function MemoryRibbon({
   memories,
+  totalCount,
+  shifting,
+  paused,
+  onShift,
+  onPauseChange,
   onSelect,
 }: {
   memories: Memory[];
+  totalCount: number;
+  shifting: boolean;
+  paused: boolean;
+  onShift: () => void;
+  onPauseChange: (paused: boolean) => void;
   onSelect: (memory: Memory) => void;
 }) {
   return (
-    <section className="camp-memory-ribbon" aria-label="キャンプの思い出一覧">
+    <section
+      className="camp-memory-ribbon"
+      data-shifting={shifting}
+      data-paused={paused}
+      aria-label="キャンプの思い出待ちリスト"
+      onPointerEnter={() => onPauseChange(true)}
+      onPointerLeave={() => onPauseChange(false)}
+      onPointerDown={() => onPauseChange(true)}
+      onPointerUp={() => onPauseChange(false)}
+      onPointerCancel={() => onPauseChange(false)}
+      onFocus={() => onPauseChange(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          onPauseChange(false);
+        }
+      }}
+    >
       <div className="camp-memory-ribbon-title">
-        <span>みんなの</span>
-        <strong>思い出を読む</strong>
-        <small>横にスワイプ →</small>
+        <span>MEMORY QUEUE</span>
+        <strong>次の思い出</strong>
+        <small>舞台 6 / 全{totalCount}</small>
+        <button type="button" onClick={onShift} disabled={shifting || memories.length === 0}>
+          {paused ? '再開して送る' : '次へ送る'} <b>→</b>
+        </button>
       </div>
-      <div className="camp-memory-ribbon-track">
+      <div className="camp-memory-ribbon-track" aria-live="polite">
         {memories.map((memory) => (
           <button
             key={memory.id}
