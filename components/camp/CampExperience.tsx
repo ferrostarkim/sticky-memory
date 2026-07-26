@@ -54,6 +54,9 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
         spotlight={spotlight}
         onSelect={setSelected}
       />
+      {!spotlight && (
+        <MemoryRibbon memories={visibleMemories} onSelect={setSelected} />
+      )}
 
       <header className="camp-header">
         <div className="camp-brand">
@@ -117,5 +120,50 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
 
       {selected && <Lightbox memory={selected} onClose={() => setSelected(null)} />}
     </main>
+  );
+}
+
+const RIBBON_COLORS: Record<string, string> = {
+  'bg-yellow-200': '#f5d995',
+  'bg-pink-200': '#e8b7b7',
+  'bg-blue-200': '#a9ced0',
+  'bg-green-200': '#b9d2a2',
+  'bg-purple-200': '#c9b4d6',
+  'bg-orange-200': '#e8bd92',
+};
+
+function MemoryRibbon({
+  memories,
+  onSelect,
+}: {
+  memories: Memory[];
+  onSelect: (memory: Memory) => void;
+}) {
+  return (
+    <section className="camp-memory-ribbon" aria-label="キャンプの思い出一覧">
+      <div className="camp-memory-ribbon-title">
+        <span>みんなの</span>
+        <strong>思い出を読む</strong>
+        <small>横にスワイプ →</small>
+      </div>
+      <div className="camp-memory-ribbon-track">
+        {memories.map((memory) => (
+          <button
+            key={memory.id}
+            type="button"
+            className="camp-ribbon-note"
+            style={{ backgroundColor: RIBBON_COLORS[memory.color] ?? '#f5d995' }}
+            onClick={() => onSelect(memory)}
+          >
+            {memory.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={memory.image} alt="" />
+            )}
+            <span>{memory.content || '写真の思い出'}</span>
+            <small>— {memory.author}</small>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
