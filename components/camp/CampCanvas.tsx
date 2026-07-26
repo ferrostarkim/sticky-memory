@@ -64,11 +64,12 @@ const SHRUB_POSITIONS: Array<[number, number, number, number]> = [
 ];
 
 const MEMORY_POSITIONS: Array<[number, number]> = [
-  [-5.8, -1.55], [-4.45, -2.7], [-2.8, -3.75], [-0.85, -4.35],
-  [1.2, -4.2], [3.15, -3.55], [4.8, -2.65], [5.85, -1.25],
-  [5.65, 0.65], [4.85, 2.3], [3.35, 3.65], [1.5, 4.3],
-  [-0.55, 4.15], [-2.45, 3.55], [-4.2, 2.75], [-5.45, 1.45],
-  [-3.6, -0.25], [-1.75, 1.25], [1.35, 1.75], [3.4, 0.25],
+  [-5.15, -1.35],
+  [-4.25, 1.65],
+  [-1.6, 3.25],
+  [1.65, 3.25],
+  [4.3, 1.55],
+  [5.15, -1.25],
 ];
 
 const NOTE_COLORS: Record<string, string> = {
@@ -94,7 +95,7 @@ export default function CampCanvas({ memories, spotlight, onSelect }: CampCanvas
   return (
     <div className="camp-canvas" aria-label="3Dキャンプ場の思い出ボード">
       <Canvas
-        dpr={[1, 1.75]}
+        dpr={[0.9, 1.35]}
         camera={{ position: [12, 12, 16], fov: 35, near: 0.1, far: 100 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
@@ -117,7 +118,7 @@ export default function CampCanvas({ memories, spotlight, onSelect }: CampCanvas
           enableDamping
           dampingFactor={0.06}
           minDistance={15}
-          maxDistance={28}
+          maxDistance={42}
           minPolarAngle={Math.PI * 0.24}
           maxPolarAngle={Math.PI * 0.34}
           minAzimuthAngle={-Math.PI * 0.38}
@@ -136,8 +137,8 @@ function ResponsiveCamera() {
   return (
     <PerspectiveCamera
       makeDefault
-      position={compact ? [17, 16, 23] : [12, 12, 16]}
-      fov={compact ? 40 : 35}
+      position={compact ? [20, 19, 28] : [12, 12, 16]}
+      fov={compact ? 42 : 35}
       near={0.1}
       far={100}
     />
@@ -171,6 +172,7 @@ function CampDiorama({
         <Shrub key={`${x}-${z}`} position={[x, 0.8, z]} scale={scale} tint={tint} />
       ))}
       <MemoryVillage memories={memories} onSelect={onSelect} />
+      <CampWalkers />
     </group>
   );
 }
@@ -520,17 +522,19 @@ function MemoryVillage({
   onSelect: (memory: Memory) => void;
 }) {
   const newestId = memories.at(-1)?.id;
+  const compact = useThree((state) => state.size.width <= 760);
+  const sceneMemories = memories.slice(-6);
   return (
     <group>
-      {memories.map((memory, index) => {
+      {sceneMemories.map((memory, index) => {
         const [baseX, baseZ] = MEMORY_POSITIONS[index % MEMORY_POSITIONS.length];
-        const loop = Math.floor(index / MEMORY_POSITIONS.length);
         return (
           <MemoryPin
             key={memory.id}
             memory={memory}
-            position={[baseX + loop * 0.35, 0.82, baseZ - loop * 0.28]}
+            position={[baseX, 0.82, baseZ]}
             newest={memory.id === newestId}
+            compact={compact}
             onSelect={onSelect}
           />
         );
@@ -543,11 +547,13 @@ function MemoryPin({
   memory,
   position,
   newest,
+  compact,
   onSelect,
 }: {
   memory: Memory;
   position: [number, number, number];
   newest: boolean;
+  compact: boolean;
   onSelect: (memory: Memory) => void;
 }) {
   const color = NOTE_COLORS[memory.color] ?? '#f5d995';
@@ -563,7 +569,7 @@ function MemoryPin({
           <cylinderGeometry args={[0.055, 0.07, 0.76, 8]} />
           <meshStandardMaterial color={COLORS.darkWood} />
         </mesh>
-        <RoundedBox args={[0.75, 0.62, 0.2]} radius={0.03} position={[0, 0.92, 0]} castShadow>
+        <RoundedBox args={[1.08, 0.82, 0.2]} radius={0.03} position={[0, 1.02, 0]} castShadow>
           <meshStandardMaterial
             color={color}
             emissive={newest ? color : '#000000'}
@@ -571,24 +577,268 @@ function MemoryPin({
             roughness={0.86}
           />
         </RoundedBox>
-        <mesh position={[0, 0.96, 0.12]}>
+        <mesh position={[0.42, 1.26, 0.12]} scale={0.48}>
           <shapeGeometry args={[HEART_SHAPE]} />
           <meshStandardMaterial color="#fff8e8" />
         </mesh>
-        <Html center position={[0, 1.38, 0]} distanceFactor={13} zIndexRange={[8, 1]}>
+        <Html
+          center
+          position={[0, 1.3, 0.13]}
+          distanceFactor={compact ? 8.5 : 11.5}
+          zIndexRange={[8, 1]}
+        >
           <button
             type="button"
-            className={`camp-memory-bubble ${newest ? 'camp-memory-bubble-new' : ''}`}
+            className={`camp-memory-note ${newest ? 'camp-memory-note-new' : ''}`}
+            style={{ backgroundColor: color }}
             onClick={(event) => {
               event.stopPropagation();
               onSelect(memory);
             }}
             aria-label={`${memory.author}さんの思い出を開く`}
           >
-            {memory.author}
+            {memory.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={memory.image} alt="" />
+            )}
+            <span>{memory.content || '写真の思い出'}</span>
+            <small>— {memory.author}</small>
           </button>
         </Html>
       </group>
     </Float>
+  );
+}
+
+type WalkerKind = 'jesus' | 'child-a' | 'child-b' | 'sheep' | 'dog';
+
+const WALK_ROUTE: Array<[number, number, number]> = [
+  [-5.7, 0.85, 1.5],
+  [-4.1, 0.85, -0.6],
+  [-2.2, 0.85, 1.3],
+  [-0.2, 0.85, -0.2],
+  [1.7, 0.85, 1.8],
+  [3.7, 0.85, 0.2],
+  [5.2, 0.85, -1.25],
+  [3.8, 0.85, -2.6],
+  [1.4, 0.85, -2.3],
+  [-1.1, 0.85, -2.4],
+  [-3.6, 0.85, -2.0],
+];
+
+function CampWalkers() {
+  return (
+    <group>
+      <Walker kind="jesus" offset={3.1} speed={0.19} scale={0.82} />
+      <Walker kind="child-a" offset={2.5} speed={0.24} scale={0.72} />
+      <Walker kind="child-b" offset={5.1} speed={0.22} scale={0.68} />
+      <Walker kind="sheep" offset={7.25} speed={0.17} scale={0.78} />
+      <Walker kind="dog" offset={8.8} speed={0.3} scale={0.7} />
+    </group>
+  );
+}
+
+function Walker({
+  kind,
+  offset,
+  speed,
+  scale,
+}: {
+  kind: WalkerKind;
+  offset: number;
+  speed: number;
+  scale: number;
+}) {
+  const root = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!root.current || !body.current) return;
+    const routeProgress = clock.elapsedTime * speed + offset;
+    const segment = Math.floor(routeProgress) % WALK_ROUTE.length;
+    const local = routeProgress - Math.floor(routeProgress);
+    const start = WALK_ROUTE[segment];
+    const end = WALK_ROUTE[(segment + 1) % WALK_ROUTE.length];
+    const travel = Math.min(local / 0.72, 1);
+    const eased = travel * travel * (3 - 2 * travel);
+    const x = THREE.MathUtils.lerp(start[0], end[0], eased);
+    const y = THREE.MathUtils.lerp(start[1], end[1], eased);
+    const z = THREE.MathUtils.lerp(start[2], end[2], eased);
+
+    root.current.position.set(x, y, z);
+    const isWalking = local < 0.72;
+    if (isWalking) {
+      root.current.rotation.y = Math.atan2(end[0] - start[0], end[2] - start[2]);
+      body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * 8 + offset)) * 0.08;
+      body.current.rotation.z = Math.sin(clock.elapsedTime * 8 + offset) * 0.035;
+    } else {
+      root.current.rotation.y = Math.atan2(-x, -z);
+      body.current.position.y = 0;
+      body.current.rotation.z = Math.sin(clock.elapsedTime * 1.8 + offset) * 0.015;
+    }
+  });
+
+  return (
+    <group ref={root} scale={scale}>
+      <group ref={body}>
+        {kind === 'jesus' && <JesusFigure />}
+        {(kind === 'child-a' || kind === 'child-b') && (
+          <ChildFigure variant={kind === 'child-a' ? 0 : 1} />
+        )}
+        {kind === 'sheep' && <SheepFigure />}
+        {kind === 'dog' && <DogFigure />}
+      </group>
+    </group>
+  );
+}
+
+function JesusFigure() {
+  return (
+    <group>
+      <mesh position={[0, 1.05, 0]} castShadow>
+        <coneGeometry args={[0.48, 1.7, 16]} />
+        <meshStandardMaterial color="#f6edda" roughness={0.9} />
+      </mesh>
+      <mesh position={[0.11, 1.18, 0.43]} rotation-z={-0.16}>
+        <boxGeometry args={[0.16, 1.45, 0.06]} />
+        <meshStandardMaterial color="#b98b72" />
+      </mesh>
+      <mesh position={[0, 2.03, 0]}>
+        <sphereGeometry args={[0.34, 18, 16]} />
+        <meshStandardMaterial color="#d9a37f" roughness={0.88} />
+      </mesh>
+      <mesh position={[0, 2.18, -0.05]} scale={[1.08, 0.78, 1.02]}>
+        <sphereGeometry args={[0.36, 16, 14]} />
+        <meshStandardMaterial color="#6f4d3d" roughness={0.96} />
+      </mesh>
+      <mesh position={[0, 1.87, 0.29]} scale={[0.72, 0.56, 0.35]}>
+        <sphereGeometry args={[0.29, 14, 12]} />
+        <meshStandardMaterial color="#76503f" />
+      </mesh>
+      <mesh position={[0, 2.12, -0.14]} rotation-x={Math.PI / 2}>
+        <torusGeometry args={[0.48, 0.035, 8, 32]} />
+        <meshStandardMaterial color="#e8c86e" emissive="#e8c86e" emissiveIntensity={0.28} />
+      </mesh>
+      <Html center position={[0, 2.72, 0]} distanceFactor={16}>
+        <span className="camp-character-label">イエスさま</span>
+      </Html>
+    </group>
+  );
+}
+
+function ChildFigure({ variant }: { variant: 0 | 1 }) {
+  const shirt = variant === 0 ? '#e39b86' : '#86a9b2';
+  const shorts = variant === 0 ? '#8b789a' : '#bd8b69';
+  return (
+    <group>
+      {[-0.17, 0.17].map((x) => (
+        <group key={x} position={[x, 0.42, 0]}>
+          <mesh>
+            <cylinderGeometry args={[0.075, 0.085, 0.62, 10]} />
+            <meshStandardMaterial color="#d4a079" />
+          </mesh>
+          <mesh position={[0, -0.32, 0.08]}>
+            <boxGeometry args={[0.18, 0.12, 0.38]} />
+            <meshStandardMaterial color="#6d5c59" />
+          </mesh>
+        </group>
+      ))}
+      <RoundedBox args={[0.72, 0.72, 0.48]} radius={0.08} position={[0, 1.08, 0]} castShadow>
+        <meshStandardMaterial color={shirt} />
+      </RoundedBox>
+      <mesh position={[0, 0.72, 0]}>
+        <boxGeometry args={[0.7, 0.32, 0.46]} />
+        <meshStandardMaterial color={shorts} />
+      </mesh>
+      <mesh position={[0, 1.72, 0]}>
+        <sphereGeometry args={[0.38, 18, 16]} />
+        <meshStandardMaterial color={variant === 0 ? '#dba67d' : '#b8795e'} />
+      </mesh>
+      <mesh position={[0, 1.91, -0.06]} scale={[1.05, 0.6, 1]}>
+        <sphereGeometry args={[0.4, 16, 14]} />
+        <meshStandardMaterial color={variant === 0 ? '#594238' : '#3e3936'} />
+      </mesh>
+      <Html center position={[0, 2.34, 0]} distanceFactor={16}>
+        <span className="camp-character-label">{variant === 0 ? 'こども' : 'おともだち'}</span>
+      </Html>
+    </group>
+  );
+}
+
+function SheepFigure() {
+  return (
+    <group>
+      <mesh position={[0, 0.72, 0]} scale={[0.78, 0.58, 1.05]} castShadow>
+        <sphereGeometry args={[0.65, 16, 14]} />
+        <meshStandardMaterial color="#f4eee0" roughness={1} />
+      </mesh>
+      {[-0.35, 0, 0.35].map((x, index) => (
+        <mesh key={x} position={[x, 1.05 + (index % 2) * 0.13, -0.02]} scale={0.45}>
+          <sphereGeometry args={[0.72, 14, 12]} />
+          <meshStandardMaterial color={index % 2 ? '#fffaf0' : '#eee7d6'} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.83, 0.72]} scale={[0.58, 0.72, 0.5]}>
+        <sphereGeometry args={[0.46, 14, 12]} />
+        <meshStandardMaterial color="#745c4e" />
+      </mesh>
+      {[-0.32, 0.32].map((x) => (
+        <mesh key={x} position={[x, 0.82, 0.78]} rotation-z={x < 0 ? 0.5 : -0.5} scale={[0.5, 0.18, 0.25]}>
+          <sphereGeometry args={[0.34, 10, 8]} />
+          <meshStandardMaterial color="#80675a" />
+        </mesh>
+      ))}
+      {[-0.35, 0.35].flatMap((x) =>
+        [-0.42, 0.35].map((z) => (
+          <mesh key={`${x}-${z}`} position={[x, 0.2, z]}>
+            <cylinderGeometry args={[0.06, 0.07, 0.45, 8]} />
+            <meshStandardMaterial color="#6e594d" />
+          </mesh>
+        ))
+      )}
+      <Html center position={[0, 1.72, 0]} distanceFactor={16}>
+        <span className="camp-character-label">ひつじ</span>
+      </Html>
+    </group>
+  );
+}
+
+function DogFigure() {
+  return (
+    <group>
+      <mesh position={[0, 0.56, 0]} scale={[0.58, 0.5, 0.9]} castShadow>
+        <sphereGeometry args={[0.58, 16, 14]} />
+        <meshStandardMaterial color="#c98f61" />
+      </mesh>
+      <mesh position={[0, 0.78, 0.62]} scale={[0.68, 0.72, 0.64]}>
+        <sphereGeometry args={[0.46, 16, 14]} />
+        <meshStandardMaterial color="#d59a69" />
+      </mesh>
+      {[-0.3, 0.3].map((x) => (
+        <mesh key={x} position={[x, 0.96, 0.57]} rotation-z={x < 0 ? 0.45 : -0.45} scale={[0.34, 0.76, 0.22]}>
+          <sphereGeometry args={[0.35, 12, 10]} />
+          <meshStandardMaterial color="#80553f" />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.72, 1.02]} scale={[0.48, 0.38, 0.48]}>
+        <sphereGeometry args={[0.32, 12, 10]} />
+        <meshStandardMaterial color="#e6b681" />
+      </mesh>
+      {[-0.3, 0.3].flatMap((x) =>
+        [-0.35, 0.35].map((z) => (
+          <mesh key={`${x}-${z}`} position={[x, 0.18, z]}>
+            <cylinderGeometry args={[0.06, 0.075, 0.42, 8]} />
+            <meshStandardMaterial color="#9a6647" />
+          </mesh>
+        ))
+      )}
+      <mesh position={[0, 0.72, -0.78]} rotation-z={-0.6}>
+        <cylinderGeometry args={[0.05, 0.09, 0.82, 8]} />
+        <meshStandardMaterial color="#c98f61" />
+      </mesh>
+      <Html center position={[0, 1.52, 0]} distanceFactor={16}>
+        <span className="camp-character-label">わんちゃん</span>
+      </Html>
+    </group>
   );
 }
