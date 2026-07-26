@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "クロスミッションクリスチャンスクール — 芳名帳",
-  description: "QRから写真とメッセージを投稿すると、リアルタイムでボードに表示されます。",
+  title: "クロスミッションキャンプ — 3D思い出ボード",
+  description: "会瀬青少年の家で過ごすキャンプの思い出を、リアルタイムの3Dキャンプ場に残そう。",
 };
 
 export default function RootLayout({
