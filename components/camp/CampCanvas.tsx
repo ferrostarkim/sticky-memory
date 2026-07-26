@@ -1,16 +1,14 @@
 'use client';
 
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import {
-  Billboard,
-  ContactShadows,
   Float,
   Html,
   OrbitControls,
   PerspectiveCamera,
   RoundedBox,
 } from '@react-three/drei';
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import * as THREE from 'three';
 import { Memory } from '@/types/memory';
 
@@ -20,88 +18,112 @@ interface CampCanvasProps {
   onSelect: (memory: Memory) => void;
 }
 
-const TREE_POSITIONS: Array<[number, number, number, number]> = [
-  [-10.5, 0, -3, 1.35],
-  [-8.7, 0, -6.3, 1],
-  [-6.7, 0, -8.4, 1.2],
-  [-3.8, 0, -9.4, 0.95],
-  [3.8, 0, -9.4, 1.05],
-  [6.6, 0, -8.5, 1.3],
-  [9, 0, -6.4, 1.05],
-  [10.7, 0, -3.2, 1.4],
-  [-11.2, 0, 1.4, 1],
-  [11.1, 0, 1.7, 1.1],
-  [-9.8, 0, 5.7, 0.9],
-  [9.8, 0, 5.8, 1],
+const COLORS = {
+  cream: '#f8f0dd',
+  island: '#cfdbab',
+  islandSide: '#b59a77',
+  lavender: '#a58abb',
+  lavenderDark: '#745d8e',
+  sage: '#879b68',
+  sageDark: '#65784d',
+  peach: '#dca37f',
+  wood: '#a77a58',
+  darkWood: '#76523f',
+  water: '#8fc3c4',
+  path: '#efe3cf',
+  window: '#f8d48a',
+};
+
+const TREE_POSITIONS: Array<[number, number, number, number, number]> = [
+  [-7.1, 0.6, -4.5, 0.95, 0],
+  [-6.25, 0.6, -5.1, 0.72, 1],
+  [-4.9, 0.6, -5.35, 0.82, 2],
+  [5.3, 0.6, -5.1, 0.8, 1],
+  [6.5, 0.6, -4.55, 1, 0],
+  [7.25, 0.6, -3.6, 0.72, 2],
+  [-7.7, 0.6, 0.8, 0.82, 1],
+  [-7.35, 0.6, 2.2, 0.66, 2],
+  [7.35, 0.6, 1.15, 0.84, 0],
+  [6.75, 0.6, 2.7, 0.7, 1],
+  [-5.8, 0.6, 5.1, 0.76, 0],
+  [4.7, 0.6, 5.15, 0.82, 2],
 ];
 
-const ROCK_POSITIONS: Array<[number, number, number, number]> = [
-  [-5.7, 0.15, 2.8, 0.55],
-  [5.4, 0.13, 3.6, 0.42],
-  [-7.3, 0.12, -2.2, 0.38],
-  [7.5, 0.1, -1.7, 0.32],
-  [-2.7, 0.1, 6.4, 0.35],
-  [3.1, 0.12, 6.6, 0.45],
+const SHRUB_POSITIONS: Array<[number, number, number, number]> = [
+  [-7.3, 4.35, 0.65, 0],
+  [-5.8, 4.7, 0.55, 1],
+  [-2.7, 5.55, 0.45, 2],
+  [0.7, 5.7, 0.55, 1],
+  [3.4, 5.25, 0.5, 0],
+  [6.1, 4.6, 0.52, 2],
+  [7.45, 0.25, 0.56, 1],
+  [7.1, -2.4, 0.48, 0],
+  [-7.45, -1.75, 0.52, 2],
+  [-3.1, -5.45, 0.44, 1],
+  [2.7, -5.5, 0.46, 0],
+];
+
+const MEMORY_POSITIONS: Array<[number, number]> = [
+  [-5.8, -1.55], [-4.45, -2.7], [-2.8, -3.75], [-0.85, -4.35],
+  [1.2, -4.2], [3.15, -3.55], [4.8, -2.65], [5.85, -1.25],
+  [5.65, 0.65], [4.85, 2.3], [3.35, 3.65], [1.5, 4.3],
+  [-0.55, 4.15], [-2.45, 3.55], [-4.2, 2.75], [-5.45, 1.45],
+  [-3.6, -0.25], [-1.75, 1.25], [1.35, 1.75], [3.4, 0.25],
 ];
 
 const NOTE_COLORS: Record<string, string> = {
-  'bg-yellow-200': '#fff0a8',
-  'bg-pink-200': '#ffc8d8',
-  'bg-blue-200': '#bfe5f5',
-  'bg-green-200': '#cfe7bb',
-  'bg-purple-200': '#dfcff5',
-  'bg-orange-200': '#ffd1a8',
+  'bg-yellow-200': '#f5d995',
+  'bg-pink-200': '#e8b7b7',
+  'bg-blue-200': '#a9ced0',
+  'bg-green-200': '#b9d2a2',
+  'bg-purple-200': '#c9b4d6',
+  'bg-orange-200': '#e8bd92',
 };
 
-export default function CampCanvas({
-  memories,
-  spotlight,
-  onSelect,
-}: CampCanvasProps) {
+const HEART_SHAPE = (() => {
+  const heart = new THREE.Shape();
+  heart.moveTo(0, 0.12);
+  heart.bezierCurveTo(0, 0.12, -0.28, -0.08, -0.28, 0.14);
+  heart.bezierCurveTo(-0.28, 0.36, -0.04, 0.4, 0, 0.24);
+  heart.bezierCurveTo(0.04, 0.4, 0.28, 0.36, 0.28, 0.14);
+  heart.bezierCurveTo(0.28, -0.08, 0, 0.12, 0, 0.12);
+  return heart;
+})();
+
+export default function CampCanvas({ memories, spotlight, onSelect }: CampCanvasProps) {
   return (
     <div className="camp-canvas" aria-label="3Dキャンプ場の思い出ボード">
       <Canvas
-        shadows
-        dpr={[1, 1.5]}
-        camera={{ position: [0, 7.4, 14.5], fov: 42, near: 0.1, far: 80 }}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: 'high-performance',
-        }}
+        dpr={[1, 1.75]}
+        camera={{ position: [12, 12, 16], fov: 35, near: 0.1, far: 100 }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
-        <color attach="background" args={['#081a23']} />
-        <fog attach="fog" args={['#081a23', 17, 36]} />
-        <ambientLight intensity={0.72} color="#9dc8c3" />
-        <hemisphereLight args={['#9fc9db', '#17351f', 1.2]} />
+        <color attach="background" args={[COLORS.cream]} />
+        <ambientLight intensity={1.5} color="#fff8e9" />
+        <hemisphereLight args={['#fff8e8', '#9baa78', 2.2]} />
         <directionalLight
-          castShadow
-          position={[-6, 12, 4]}
-          intensity={2.1}
-          color="#ffdca0"
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-          shadow-camera-left={-14}
-          shadow-camera-right={14}
-          shadow-camera-top={14}
-          shadow-camera-bottom={-14}
+          position={[-8, 14, 10]}
+          intensity={3.2}
+          color="#fff1d5"
         />
 
         <ResponsiveCamera />
-        <CampScene memories={memories} onSelect={onSelect} />
+        <CampDiorama memories={memories} onSelect={onSelect} />
 
         <OrbitControls
           makeDefault
-          target={[0, 1.25, 0]}
+          target={[0, 0.8, 0]}
           enablePan={false}
           enableDamping
-          dampingFactor={0.055}
-          minDistance={9.5}
-          maxDistance={19}
-          minPolarAngle={Math.PI * 0.22}
-          maxPolarAngle={Math.PI * 0.48}
+          dampingFactor={0.06}
+          minDistance={15}
+          maxDistance={28}
+          minPolarAngle={Math.PI * 0.24}
+          maxPolarAngle={Math.PI * 0.34}
+          minAzimuthAngle={-Math.PI * 0.38}
+          maxAzimuthAngle={Math.PI * 0.38}
           autoRotate={spotlight}
-          autoRotateSpeed={0.42}
+          autoRotateSpeed={0.35}
         />
       </Canvas>
     </div>
@@ -110,18 +132,19 @@ export default function CampCanvas({
 
 function ResponsiveCamera() {
   const compact = useThree((state) => state.size.width <= 760);
+
   return (
     <PerspectiveCamera
       makeDefault
-      position={[0, compact ? 8.4 : 7.4, compact ? 18 : 14.5]}
-      fov={compact ? 46 : 42}
+      position={compact ? [17, 16, 23] : [12, 12, 16]}
+      fov={compact ? 40 : 35}
       near={0.1}
-      far={80}
+      far={100}
     />
   );
 }
 
-function CampScene({
+function CampDiorama({
   memories,
   onSelect,
 }: {
@@ -129,111 +152,131 @@ function CampScene({
   onSelect: (memory: Memory) => void;
 }) {
   return (
-    <group>
-      <Ground />
-      <Moon />
-      <Lodge />
-      <Tent position={[-4.8, 0, -2.4]} color="#d46648" rotation={0.18} />
-      <Tent position={[4.9, 0, -2.2]} color="#d9a441" rotation={-0.22} />
-      <Tent position={[-6.2, 0, 2.2]} color="#3e8a79" rotation={0.45} scale={0.78} />
-      <Tent position={[6.4, 0, 2.1]} color="#5b7bb5" rotation={-0.4} scale={0.76} />
-
-      {TREE_POSITIONS.map(([x, y, z, scale], index) => (
-        <PineTree
-          key={`${x}-${z}`}
-          position={[x, y, z]}
-          scale={scale}
-          tint={index % 3}
-        />
+    <group rotation-y={-0.08}>
+      <Island />
+      <PondAndBridge />
+      <MainLodge />
+      <CafeCabin />
+      <Tent position={[-4.8, 0.65, -1.7]} color="#c695b5" rotation={0.2} />
+      <Tent position={[4.9, 0.65, -1.9]} color="#e2a17f" rotation={-0.35} />
+      <Tent position={[-3.55, 0.65, 3.1]} color="#9ab48a" rotation={0.55} scale={0.78} />
+      <Tent position={[3.95, 0.65, 3.4]} color="#99b9c2" rotation={-0.55} scale={0.8} />
+      <CampFire />
+      <PicnicArea />
+      <WelcomeSign />
+      {TREE_POSITIONS.map(([x, y, z, scale, tint]) => (
+        <ToyTree key={`${x}-${z}`} position={[x, y, z]} scale={scale} tint={tint} />
       ))}
+      {SHRUB_POSITIONS.map(([x, z, scale, tint]) => (
+        <Shrub key={`${x}-${z}`} position={[x, 0.8, z]} scale={scale} tint={tint} />
+      ))}
+      <MemoryVillage memories={memories} onSelect={onSelect} />
+    </group>
+  );
+}
 
-      {ROCK_POSITIONS.map(([x, y, z, scale]) => (
-        <mesh key={`${x}-${z}`} position={[x, y, z]} scale={scale} castShadow>
-          <dodecahedronGeometry args={[1, 0]} />
-          <meshStandardMaterial color="#748279" roughness={1} />
+function Island() {
+  return (
+    <group>
+      <mesh position={[0, -0.15, 0]} scale={[1.28, 1, 0.96]} castShadow receiveShadow>
+        <cylinderGeometry args={[7, 7.35, 1.25, 48, 1]} />
+        <meshStandardMaterial color={COLORS.islandSide} roughness={0.95} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]} scale={[1.28, 1, 0.96]} castShadow receiveShadow>
+        <cylinderGeometry args={[6.84, 6.95, 0.34, 48, 1]} />
+        <meshStandardMaterial color={COLORS.island} roughness={0.92} />
+      </mesh>
+      {[-7.1, -4.8, -2.1, 1.2, 4.35, 7].map((x, index) => (
+        <mesh key={x} position={[x, -0.83, index % 2 ? 6.1 : -6.1]} scale={[1.2, 0.68, 0.8]} castShadow>
+          <dodecahedronGeometry args={[0.72, 1]} />
+          <meshStandardMaterial color={index % 2 ? '#ae8c70' : '#c09d7b'} roughness={1} />
         </mesh>
       ))}
-
-      <CampFire />
-      <MemoryCircle memories={memories} onSelect={onSelect} />
-      <Fireflies />
-      <ContactShadows
-        position={[0, 0.02, 0]}
-        opacity={0.42}
-        scale={30}
-        blur={2.2}
-        far={10}
-        color="#06140f"
-      />
     </group>
   );
 }
 
-function Ground() {
+function MainLodge() {
   return (
-    <group>
-      <mesh rotation-x={-Math.PI / 2} receiveShadow>
-        <circleGeometry args={[14.5, 64]} />
-        <meshStandardMaterial color="#28543b" roughness={1} />
-      </mesh>
-      <mesh position={[0, 0.025, 1.2]} rotation-x={-Math.PI / 2} receiveShadow>
-        <ringGeometry args={[2.25, 3.25, 48]} />
-        <meshStandardMaterial color="#9a8057" roughness={1} />
-      </mesh>
-      <mesh
-        position={[0, 0.035, 6.8]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        scale={[1.4, 4.8, 1]}
-        receiveShadow
-      >
-        <circleGeometry args={[1, 28]} />
-        <meshStandardMaterial color="#917650" roughness={1} />
-      </mesh>
-    </group>
-  );
-}
-
-function Moon() {
-  return (
-    <group position={[-8.5, 9.5, -14]}>
-      <mesh>
-        <sphereGeometry args={[1.45, 32, 32]} />
-        <meshBasicMaterial color="#fff3c4" />
-      </mesh>
-      <pointLight intensity={10} distance={28} color="#b9d7d8" />
-    </group>
-  );
-}
-
-function Lodge() {
-  return (
-    <group position={[0, 0, -6.2]}>
-      <RoundedBox args={[5.8, 2.4, 2.8]} radius={0.18} position={[0, 1.2, 0]} castShadow>
-        <meshStandardMaterial color="#8b5a37" roughness={0.85} />
+    <group position={[-2.1, 0.8, -4.15]}>
+      <RoundedBox args={[4.6, 2.5, 2.7]} radius={0.32} smoothness={6} position={[0, 1.25, 0]} castShadow>
+        <meshStandardMaterial color="#f2dfbd" roughness={0.88} />
       </RoundedBox>
-      <mesh position={[0, 2.8, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-        <coneGeometry args={[3.65, 1.65, 4]} />
-        <meshStandardMaterial color="#4c3025" roughness={0.92} />
+      <mesh position={[0, 2.95, 0]} rotation-y={Math.PI / 4} castShadow>
+        <coneGeometry args={[3.15, 1.3, 4]} />
+        <meshStandardMaterial color="#b28cac" roughness={0.86} />
       </mesh>
-      {[-1.85, 0, 1.85].map((x, index) => (
-        <group key={x} position={[x, 1.35, 1.43]}>
-          <mesh>
-            <planeGeometry args={[0.85, 0.86]} />
-            <meshStandardMaterial
-              color={index === 1 ? '#5e3b2a' : '#ffd889'}
-              emissive={index === 1 ? '#000000' : '#f0a642'}
-              emissiveIntensity={index === 1 ? 0 : 0.9}
-            />
+      <mesh position={[0, 1.0, 1.42]} castShadow>
+        <boxGeometry args={[1.15, 1.75, 0.22]} />
+        <meshStandardMaterial color={COLORS.lavenderDark} roughness={0.86} />
+      </mesh>
+      {[-1.45, 1.45].map((x) => (
+        <group key={x} position={[x, 1.45, 1.43]}>
+          <RoundedBox args={[0.88, 0.95, 0.18]} radius={0.03}>
+            <meshStandardMaterial color={COLORS.window} emissive="#f6bd67" emissiveIntensity={0.16} />
+          </RoundedBox>
+          <mesh position={[0, 0, 0.12]}>
+            <boxGeometry args={[0.08, 0.92, 0.08]} />
+            <meshStandardMaterial color="#fff3dc" />
           </mesh>
-          {index !== 1 && <pointLight position={[0, 0, 0.4]} intensity={2} distance={4} color="#ffc96c" />}
         </group>
       ))}
-      <Html position={[0, 3.72, 0]} center distanceFactor={14}>
+      <RoundedBox args={[4.25, 0.3, 0.65]} radius={0.07} position={[0, 2.28, 1.68]} castShadow>
+        <meshStandardMaterial color="#9b7aae" roughness={0.84} />
+      </RoundedBox>
+      <Html position={[0, 3.82, 0]} center distanceFactor={15}>
         <div className="camp-lodge-label">
-          <span>ŌSE YOUTH HOUSE</span>
+          <span>OISE YOUTH HOUSE</span>
           <strong>会瀬青少年の家</strong>
         </div>
       </Html>
+    </group>
+  );
+}
+
+function CafeCabin() {
+  return (
+    <group position={[4.6, 0.8, -4.05]}>
+      <RoundedBox args={[2.7, 2, 2.25]} radius={0.3} smoothness={6} position={[0, 1, 0]} castShadow>
+        <meshStandardMaterial color="#e9c9a9" roughness={0.9} />
+      </RoundedBox>
+      <RoundedBox args={[3.05, 0.38, 2.55]} radius={0.08} position={[0, 2.15, 0]} castShadow>
+        <meshStandardMaterial color="#d89e80" roughness={0.88} />
+      </RoundedBox>
+      <RoundedBox args={[1.15, 1.1, 0.18]} radius={0.03} position={[0, 1.1, 1.18]}>
+        <meshStandardMaterial color="#8a6a78" />
+      </RoundedBox>
+      <StripedAwning position={[0, 1.62, 1.42]} />
+      <FlowerBox position={[-0.95, 2.48, 0]} />
+      <FlowerBox position={[0.95, 2.48, 0]} />
+    </group>
+  );
+}
+
+function StripedAwning({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position} rotation-x={-0.24}>
+      {[-0.9, -0.54, -0.18, 0.18, 0.54, 0.9].map((x, index) => (
+        <RoundedBox key={x} args={[0.36, 0.16, 0.8]} radius={0.03} position={[x, 0, 0]} castShadow>
+          <meshStandardMaterial color={index % 2 ? '#f9eedc' : '#a98ab8'} />
+        </RoundedBox>
+      ))}
+    </group>
+  );
+}
+
+function FlowerBox({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <RoundedBox args={[0.9, 0.28, 0.42]} radius={0.05} castShadow>
+        <meshStandardMaterial color={COLORS.wood} />
+      </RoundedBox>
+      {[-0.28, 0, 0.28].map((x, index) => (
+        <mesh key={x} position={[x, 0.26, 0]}>
+          <sphereGeometry args={[0.16, 12, 10]} />
+          <meshStandardMaterial color={index % 2 ? '#e3a6ad' : '#f4d78f'} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -251,20 +294,26 @@ function Tent({
 }) {
   return (
     <group position={position} rotation-y={rotation} scale={scale}>
-      <mesh position={[0, 0.92, 0]} rotation-y={Math.PI / 4} castShadow receiveShadow>
-        <coneGeometry args={[1.75, 2.25, 4]} />
-        <meshStandardMaterial color={color} roughness={0.92} />
+      <mesh position={[0, 1, 0]} rotation-y={Math.PI / 4} castShadow>
+        <coneGeometry args={[1.55, 2.2, 4]} />
+        <meshStandardMaterial color={color} roughness={0.9} />
       </mesh>
-      <mesh position={[0, 0.78, 1.24]} rotation-x={-0.04}>
-        <circleGeometry args={[0.46, 3]} />
-        <meshStandardMaterial color="#26392f" roughness={1} />
+      <mesh position={[0, 0.92, 1.12]} rotation-x={-0.03}>
+        <circleGeometry args={[0.47, 3]} />
+        <meshStandardMaterial color="#6e5d65" />
       </mesh>
-      <pointLight position={[0, 0.55, 0.7]} intensity={2.2} distance={4} color="#ffb458" />
+      <mesh position={[0, 1.0, 1.14]} rotation-x={-0.03} scale={[0.12, 1, 1]}>
+        <circleGeometry args={[0.47, 3]} />
+        <meshStandardMaterial color="#ead9c4" />
+      </mesh>
+      <RoundedBox args={[2.55, 0.12, 2.55]} radius={0.02} position={[0, 0.02, 0]} receiveShadow>
+        <meshStandardMaterial color="#efe1c8" />
+      </RoundedBox>
     </group>
   );
 }
 
-function PineTree({
+function ToyTree({
   position,
   scale,
   tint,
@@ -273,72 +322,197 @@ function PineTree({
   scale: number;
   tint: number;
 }) {
-  const greens = ['#214d3a', '#1d6046', '#2d6b4c'];
+  const greens = ['#879b68', '#9baa78', '#758b5e'];
+  const puffs: Array<[number, number, number, number]> = [
+    [0, 2.15, 0, 0.92],
+    [-0.55, 1.8, 0.12, 0.7],
+    [0.55, 1.75, 0, 0.76],
+    [-0.25, 2.65, 0, 0.68],
+    [0.35, 2.55, -0.15, 0.62],
+  ];
   return (
     <group position={position} scale={scale}>
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <cylinderGeometry args={[0.18, 0.26, 2.4, 8]} />
-        <meshStandardMaterial color="#69442d" roughness={1} />
+      <mesh position={[0, 0.9, 0]} castShadow>
+        <cylinderGeometry args={[0.22, 0.3, 1.8, 10]} />
+        <meshStandardMaterial color="#9d7456" roughness={1} />
       </mesh>
-      <mesh position={[0, 2.35, 0]} castShadow>
-        <coneGeometry args={[1.3, 2.8, 9]} />
-        <meshStandardMaterial color={greens[tint]} roughness={1} />
+      {puffs.map(([x, y, z, puffScale], index) => (
+        <mesh key={index} position={[x, y, z]} scale={puffScale} castShadow>
+          <sphereGeometry args={[1, 16, 14]} />
+          <meshStandardMaterial color={greens[(tint + index) % greens.length]} roughness={0.9} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Shrub({
+  position,
+  scale,
+  tint,
+}: {
+  position: [number, number, number];
+  scale: number;
+  tint: number;
+}) {
+  const greens = ['#849a6b', '#a0ad79', '#71865f'];
+  return (
+    <group position={position} scale={scale}>
+      {[-0.5, 0, 0.5].map((x, index) => (
+        <mesh key={x} position={[x, index % 2 ? 0.26 : 0, 0]} castShadow>
+          <sphereGeometry args={[0.72, 14, 12]} />
+          <meshStandardMaterial color={greens[(tint + index) % greens.length]} roughness={1} />
+        </mesh>
+      ))}
+      {[-0.36, 0.34].map((x, index) => (
+        <mesh key={x} position={[x, 0.55, 0.45]}>
+          <sphereGeometry args={[0.12, 10, 8]} />
+          <meshStandardMaterial color={index ? '#f2d58b' : '#e7b4b5'} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function PondAndBridge() {
+  return (
+    <group position={[5.35, 0.84, 4.4]}>
+      <mesh rotation-x={-Math.PI / 2} scale={[1.55, 0.85, 1]} receiveShadow>
+        <circleGeometry args={[1.35, 48]} />
+        <meshStandardMaterial color="#f4ead5" roughness={1} />
       </mesh>
-      <mesh position={[0, 3.55, 0]} castShadow>
-        <coneGeometry args={[0.92, 2.25, 9]} />
-        <meshStandardMaterial color={greens[(tint + 1) % greens.length]} roughness={1} />
+      <mesh position={[0, 0.04, 0]} rotation-x={-Math.PI / 2} scale={[1.42, 0.72, 1]}>
+        <circleGeometry args={[1.28, 48]} />
+        <meshStandardMaterial color={COLORS.water} roughness={0.42} metalness={0.05} />
       </mesh>
+      <Bridge />
+      {[[-1.8, 0.4], [1.65, -0.55], [1.45, 0.6]].map(([x, z], index) => (
+        <mesh key={index} position={[x, 0.08, z]} scale={[0.55, 0.28, 0.42]}>
+          <dodecahedronGeometry args={[0.7, 1]} />
+          <meshStandardMaterial color="#a9947d" roughness={1} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Bridge() {
+  return (
+    <group position={[0, 0.42, 0]} rotation-y={0.12}>
+      {Array.from({ length: 9 }, (_, index) => (
+        <RoundedBox
+          key={index}
+          args={[0.36, 0.12, 1.9]}
+          radius={0.02}
+          position={[(index - 4) * 0.34, Math.cos((index - 4) * 0.36) * 0.22, 0]}
+          castShadow
+        >
+          <meshStandardMaterial color={index % 2 ? '#a97758' : '#b88763'} />
+        </RoundedBox>
+      ))}
+      {[-1.05, 1.05].map((z) => (
+        <group key={z} position={[0, 0.36, z]}>
+          <mesh rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[0.055, 0.055, 3.2, 8]} />
+            <meshStandardMaterial color={COLORS.darkWood} />
+          </mesh>
+          {[-1.35, 0, 1.35].map((x) => (
+            <mesh key={x} position={[x, -0.12, 0]}>
+              <cylinderGeometry args={[0.07, 0.09, 0.85, 8]} />
+              <meshStandardMaterial color={COLORS.darkWood} />
+            </mesh>
+          ))}
+        </group>
+      ))}
     </group>
   );
 }
 
 function CampFire() {
   const flame = useRef<THREE.Group>(null);
-  const light = useRef<THREE.PointLight>(null);
 
   useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
     if (flame.current) {
-      flame.current.scale.y = 0.92 + Math.sin(t * 8) * 0.1;
-      flame.current.rotation.y = Math.sin(t * 3.2) * 0.14;
-    }
-    if (light.current) {
-      light.current.intensity = 13 + Math.sin(t * 9) * 2.2;
+      flame.current.scale.y = 0.96 + Math.sin(clock.elapsedTime * 7) * 0.08;
+      flame.current.rotation.y = clock.elapsedTime * 0.35;
     }
   });
 
   return (
-    <group position={[0, 0, 1.2]}>
+    <group position={[0.25, 0.78, -0.8]}>
       {[0, Math.PI / 2, Math.PI / 4].map((rotation) => (
-        <mesh key={rotation} position={[0, 0.23, 0]} rotation={[0, rotation, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.18, 0.22, 2.15, 10]} />
-          <meshStandardMaterial color="#5b3525" roughness={1} />
+        <mesh key={rotation} position={[0, 0.18, 0]} rotation={[0, rotation, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.12, 0.14, 1.25, 10]} />
+          <meshStandardMaterial color={COLORS.darkWood} />
         </mesh>
       ))}
-      <group ref={flame} position={[0, 1.08, 0]}>
+      <group ref={flame} position={[0, 0.74, 0]}>
         <mesh>
-          <coneGeometry args={[0.68, 1.8, 12]} />
-          <meshBasicMaterial color="#ff6a2d" transparent opacity={0.9} />
+          <coneGeometry args={[0.42, 1.1, 14]} />
+          <meshStandardMaterial color="#e58b62" emissive="#d66d42" emissiveIntensity={0.4} />
         </mesh>
-        <mesh position={[0, -0.12, 0.08]} scale={0.56}>
-          <coneGeometry args={[0.62, 1.65, 12]} />
-          <meshBasicMaterial color="#ffd45a" />
+        <mesh position={[0, -0.18, 0.08]} scale={0.55}>
+          <coneGeometry args={[0.42, 1, 14]} />
+          <meshBasicMaterial color="#f8d177" />
         </mesh>
       </group>
-      <pointLight
-        ref={light}
-        position={[0, 1.8, 0]}
-        intensity={14}
-        distance={12}
-        decay={2}
-        color="#ff8a3d"
-        castShadow
-      />
+      <pointLight position={[0, 1.1, 0]} intensity={3.5} distance={5} color="#f3b469" />
     </group>
   );
 }
 
-function MemoryCircle({
+function PicnicArea() {
+  return (
+    <group position={[-0.25, 0.75, 2.6]} rotation-y={-0.15}>
+      <RoundedBox args={[2.15, 0.18, 1.05]} radius={0.03} position={[0, 0.78, 0]} castShadow>
+        <meshStandardMaterial color="#b58260" />
+      </RoundedBox>
+      {[-0.72, 0.72].map((x) => (
+        <mesh key={x} position={[x, 0.4, 0]}>
+          <cylinderGeometry args={[0.09, 0.11, 0.82, 8]} />
+          <meshStandardMaterial color={COLORS.darkWood} />
+        </mesh>
+      ))}
+      {[-0.85, 0.85].map((z) => (
+        <RoundedBox key={z} args={[2, 0.14, 0.35]} radius={0.02} position={[0, 0.42, z]} castShadow>
+          <meshStandardMaterial color="#aa7758" />
+        </RoundedBox>
+      ))}
+      <mesh position={[-0.35, 1.05, 0]}>
+        <cylinderGeometry args={[0.17, 0.13, 0.38, 16]} />
+        <meshStandardMaterial color="#f1d9bc" />
+      </mesh>
+      <mesh position={[-0.35, 1.28, 0]}>
+        <torusGeometry args={[0.12, 0.035, 8, 16]} />
+        <meshStandardMaterial color="#9e7cb1" />
+      </mesh>
+    </group>
+  );
+}
+
+function WelcomeSign() {
+  return (
+    <group position={[-7.05, 0.8, 4.15]} rotation-y={0.48}>
+      {[-0.75, 0.75].map((x) => (
+        <mesh key={x} position={[x, 0.65, 0]}>
+          <cylinderGeometry args={[0.09, 0.12, 1.3, 8]} />
+          <meshStandardMaterial color={COLORS.darkWood} />
+        </mesh>
+      ))}
+      <RoundedBox args={[2.25, 0.9, 0.18]} radius={0.03} position={[0, 1.15, 0]} castShadow>
+        <meshStandardMaterial color="#f2dfbd" />
+      </RoundedBox>
+      <Html position={[0, 1.15, 0.13]} center distanceFactor={16}>
+        <div className="camp-welcome-sign">
+          <span>WELCOME TO</span>
+          <strong>CROSS MISSION CAMP</strong>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+function MemoryVillage({
   memories,
   onSelect,
 }: {
@@ -346,27 +520,17 @@ function MemoryCircle({
   onSelect: (memory: Memory) => void;
 }) {
   const newestId = memories.at(-1)?.id;
-  const compact = useThree((state) => state.size.width <= 760);
-
   return (
     <group>
       {memories.map((memory, index) => {
-        const ring = index % 2;
-        const slot = Math.floor(index / 2);
-        const slotsInRing = Math.ceil(memories.length / 2);
-        const angle = (slot / Math.max(1, slotsInRing)) * Math.PI * 2 + ring * 0.18;
-        const radius = ring === 0 ? 5.15 : 7.15;
-        const x = Math.sin(angle) * radius;
-        const z = Math.cos(angle) * radius + 0.4;
-        const y = ring === 0 ? 2.15 : 2.7;
-
+        const [baseX, baseZ] = MEMORY_POSITIONS[index % MEMORY_POSITIONS.length];
+        const loop = Math.floor(index / MEMORY_POSITIONS.length);
         return (
-          <MemoryMarker
+          <MemoryPin
             key={memory.id}
             memory={memory}
-            position={[x, y, z]}
+            position={[baseX + loop * 0.35, 0.82, baseZ - loop * 0.28]}
             newest={memory.id === newestId}
-            compact={compact}
             onSelect={onSelect}
           />
         );
@@ -375,103 +539,56 @@ function MemoryCircle({
   );
 }
 
-function MemoryMarker({
+function MemoryPin({
   memory,
   position,
   newest,
-  compact,
   onSelect,
 }: {
   memory: Memory;
   position: [number, number, number];
   newest: boolean;
-  compact: boolean;
   onSelect: (memory: Memory) => void;
 }) {
-  const color = NOTE_COLORS[memory.color] ?? '#fff0a8';
+  const color = NOTE_COLORS[memory.color] ?? '#f5d995';
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    onSelect(memory);
+  };
 
   return (
-    <group position={position}>
-      <mesh position={[0, -1.1, 0]} castShadow>
-        <cylinderGeometry args={[0.055, 0.08, 1.8, 8]} />
-        <meshStandardMaterial color="#6d472d" roughness={1} />
-      </mesh>
-      <Float speed={newest ? 2.2 : 1.15} rotationIntensity={0.08} floatIntensity={newest ? 0.2 : 0.08}>
-        <Billboard>
-          <mesh position={[0, 0, -0.03]} castShadow>
-            <boxGeometry args={[1.55, 1.22, 0.08]} />
-            <meshStandardMaterial
-              color={color}
-              roughness={0.9}
-              emissive={newest ? color : '#000000'}
-              emissiveIntensity={newest ? 0.16 : 0}
-            />
-          </mesh>
-          <Html
-            center
-            distanceFactor={compact ? 4.8 : 7.6}
-            position={[0, 0, 0.05]}
-            zIndexRange={[8, 1]}
+    <Float speed={newest ? 2 : 1} floatIntensity={newest ? 0.12 : 0.035} rotationIntensity={0.025}>
+      <group position={position} onClick={handleClick}>
+        <mesh position={[0, 0.38, 0]} castShadow>
+          <cylinderGeometry args={[0.055, 0.07, 0.76, 8]} />
+          <meshStandardMaterial color={COLORS.darkWood} />
+        </mesh>
+        <RoundedBox args={[0.75, 0.62, 0.2]} radius={0.03} position={[0, 0.92, 0]} castShadow>
+          <meshStandardMaterial
+            color={color}
+            emissive={newest ? color : '#000000'}
+            emissiveIntensity={newest ? 0.18 : 0}
+            roughness={0.86}
+          />
+        </RoundedBox>
+        <mesh position={[0, 0.96, 0.12]}>
+          <shapeGeometry args={[HEART_SHAPE]} />
+          <meshStandardMaterial color="#fff8e8" />
+        </mesh>
+        <Html center position={[0, 1.38, 0]} distanceFactor={13} zIndexRange={[8, 1]}>
+          <button
+            type="button"
+            className={`camp-memory-bubble ${newest ? 'camp-memory-bubble-new' : ''}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect(memory);
+            }}
+            aria-label={`${memory.author}さんの思い出を開く`}
           >
-            <button
-              type="button"
-              className={`camp-memory-card ${newest ? 'camp-memory-card-new' : ''}`}
-              style={{ backgroundColor: color }}
-              onClick={(event) => {
-                event.stopPropagation();
-                onSelect(memory);
-              }}
-              aria-label={`${memory.author}さんの思い出を開く`}
-            >
-              {memory.image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={memory.image} alt="" />
-              )}
-              <span>{memory.content || '写真の思い出'}</span>
-              <small>— {memory.author}</small>
-            </button>
-          </Html>
-          {newest && (
-            <pointLight position={[0, 0, 0.8]} intensity={2.2} distance={3.4} color={color} />
-          )}
-        </Billboard>
-      </Float>
-    </group>
-  );
-}
-
-function Fireflies() {
-  const group = useRef<THREE.Group>(null);
-  const points = useMemo(
-    () =>
-      Array.from({ length: 26 }, (_, index) => {
-        const angle = (index / 26) * Math.PI * 2;
-        const radius = 2.6 + ((index * 37) % 50) / 10;
-        return [
-          Math.sin(angle) * radius,
-          1.1 + ((index * 29) % 28) / 10,
-          Math.cos(angle) * radius + 0.6,
-        ] as [number, number, number];
-      }),
-    []
-  );
-
-  useFrame(({ clock }) => {
-    if (group.current) {
-      group.current.rotation.y = clock.getElapsedTime() * 0.045;
-    }
-  });
-
-  return (
-    <group ref={group}>
-      {points.map((position, index) => (
-        <Float key={index} speed={1.1 + (index % 4) * 0.2} floatIntensity={0.5}>
-          <mesh position={position}>
-            <sphereGeometry args={[0.035 + (index % 3) * 0.009, 8, 8]} />
-            <meshBasicMaterial color={index % 4 === 0 ? '#a8f7cf' : '#ffe78c'} />
-          </mesh>
-        </Float>
-      ))}
-    </group>
+            {memory.author}
+          </button>
+        </Html>
+      </group>
+    </Float>
   );
 }
