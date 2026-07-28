@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CampDiorama from '@/components/camp/CampDiorama';
 import CampIntroDive from '@/components/camp/CampIntroDive';
+import { COMPACT_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
 import JoinBanner from '@/components/common/JoinBanner';
 import Lightbox from '@/components/common/Lightbox';
 import VerseBanner from '@/components/common/VerseBanner';
@@ -46,7 +47,8 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
   const [queuePaused, setQueuePaused] = useState(false);
   const [herald, setHerald] = useState<Memory | null>(null);
   const [manualHold, setManualHold] = useState(false);
-  const [stageSlots, setStageSlots] = useState(STAGE_SLOTS_WIDE);
+  const compact = useMediaQuery(COMPACT_QUERY);
+  const stageSlots = compact ? STAGE_SLOTS_COMPACT : STAGE_SLOTS_WIDE;
   const manualTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shiftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heraldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,18 +59,6 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
     () => (previewing ? [...DEV_PREVIEW_MEMORIES, ...rehearsal] : memories),
     [previewing, rehearsal, memories]
   );
-
-  // 縦画面はステージ枠数を減らす (ジオラマ側の 5 点の輪と対応)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 760px)');
-    const apply = () => setStageSlots(mq.matches ? STAGE_SLOTS_COMPACT : STAGE_SLOTS_WIDE);
-    const raf = requestAnimationFrame(apply);
-    mq.addEventListener('change', apply);
-    return () => {
-      cancelAnimationFrame(raf);
-      mq.removeEventListener('change', apply);
-    };
-  }, []);
 
   // 開発時に ?herald=1 を付けると、新着が届く様子を確認できる。
   // Supabase を繋がずに主人公の反応を見たいとき用。
