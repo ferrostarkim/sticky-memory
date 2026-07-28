@@ -114,7 +114,9 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
     ? ((stageOffset % rotating.length) + rotating.length) % rotating.length
     : 0;
   const stageMemories = useMemo(() => {
-    const count = Math.min(STAGE_SLOTS, rotating.length);
+    // 枠数より 1 枚多く渡す。指で回している最中に、
+    // 輪の端から入ってくる次の 1 枚を見せるため。
+    const count = Math.min(STAGE_SLOTS + 1, rotating.length);
     return Array.from(
       { length: count },
       (_, index) => rotating[(normalizedOffset + index) % rotating.length]

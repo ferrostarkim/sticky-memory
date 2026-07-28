@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Memory } from '@/types/memory';
 
 interface CampDioramaProps {
@@ -58,8 +58,49 @@ const HERALD_ANCHOR = { x: 48.2, y: 38.5 };
 /** ふきだしの位置 */
 const BUBBLE_ANCHOR = { x: 56, y: 44 };
 
-/** 指で払って回すときの、1 枚ぶんに相当する移動量 (画面比) */
-const DRAG_STEP_RATIO = 0.11;
+/** 1 枠ぶん送るのに必要な指の移動量 (画面幅に対する比) */
+const DRAG_SPAN_RATIO = 0.13;
+/** 指を離したあとの減速の強さ (大きいほど早く止まる) */
+const FRICTION = 5.5;
+/** 枠にすっと吸い付く強さ */
+const SETTLE_STIFFNESS = 11;
+/** これ以下の速さになったら枠に寄せにいく */
+const SETTLE_VELOCITY = 0.35;
+
+/** 輪の両端の外側。ここへ出ていき、ここから入ってくる。 */
+function slotAt(position: number) {
+  const last = PIN_SLOTS.length - 1;
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+  if (position <= 0) {
+    // 先頭より手前は、slot0 → slot1 の向きを逆に伸ばして画面外へ
+    const a = PIN_SLOTS[0];
+    const b = PIN_SLOTS[1];
+    const t = -position;
+    return {
+      x: lerp(a.x, a.x - (b.x - a.x), t),
+      y: lerp(a.y, a.y - (b.y - a.y), t),
+      tilt: a.tilt,
+      fade: Math.max(0, 1 - t),
+    };
+  }
+  if (position >= last) {
+    const a = PIN_SLOTS[last];
+    const b = PIN_SLOTS[last - 1];
+    const t = position - last;
+    return {
+      x: lerp(a.x, a.x - (b.x - a.x), t),
+      y: lerp(a.y, a.y - (b.y - a.y), t),
+      tilt: a.tilt,
+      fade: Math.max(0, 1 - t),
+    };
+  }
+  const i = Math.floor(position);
+  const t = position - i;
+  const a = PIN_SLOTS[i];
+  const b = PIN_SLOTS[i + 1];
+  return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), tilt: lerp(a.tilt, b.tilt, t), fade: 1 };
+}
 
 const NOTE_COLORS: Record<string, string> = {
   'bg-yellow-200': '#f5d995',
@@ -81,7 +122,25 @@ export default function CampDiorama({
   const root = useRef<HTMLDivElement>(null);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  const drag = useRef<{ id: number; x: number; carried: number } | null>(null);
+  /** 輪の連続位置。0 が定位置で、1 進むと 1 枠ぶん送られる。 */
+  const [spin, setSpinState] = useState(0);
+  // 状態更新関数の中で副作用を起こすと StrictMode で二重に走るので、
+  // 現在値は ref で保持して読み出す。
+  const spinRef = useRef(0);
+  const setSpin = useCallback((value: number) => {
+    spinRef.current = value;
+    setSpinState(value);
+  }, []);
+  /** 横一列の輪を使うのは横長のときだけ。縦画面は 3x3 の格子。 */
+  const [ring, setRing] = useState(true);
+  const drag = useRef<{
+    id: number;
+    x: number;
+    lastX: number;
+    lastAt: number;
+    velocity: number;
+  } | null>(null);
+  const motion = useRef<{ spin: number; velocity: number; raf: number } | null>(null);
   const newestId = memories.at(-1)?.id;
   // せりふは届いた枚数で切り替える。同じ文が続かないように。
   const heraldLine = herald
@@ -122,17 +181,114 @@ export default function CampDiorama({
     };
   }, [spotlight]);
 
-  // 指で横に払うと輪が回る。一定量ごとに 1 枚送る。
+  // 縦画面では輪ではなく格子に並べるので、連続回転は使わない
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 761px)');
+    const apply = () => setRing(mq.matches);
+    const raf = requestAnimationFrame(apply);
+    mq.addEventListener('change', apply);
+    return () => {
+      cancelAnimationFrame(raf);
+      mq.removeEventListener('change', apply);
+    };
+  }, []);
+
+  /** 1 枠ぶん送り切ったら親に伝え、その分を戻して位置を保つ */
+  const commit = useCallback(
+    (value: number) => {
+      let next = value;
+      while (next >= 1) {
+        onRotate?.(1);
+        next -= 1;
+      }
+      while (next <= -1) {
+        onRotate?.(-1);
+        next += 1;
+      }
+      return next;
+    },
+    [onRotate]
+  );
+
+  /** 指を離したあと、惰性で滑らせてから枠に吸い付かせる */
+  const glide = useCallback(
+    (initialSpin: number, initialVelocity: number) => {
+      if (motion.current) cancelAnimationFrame(motion.current.raf);
+      const state = { spin: initialSpin, velocity: initialVelocity, raf: 0 };
+      motion.current = state;
+      const started = performance.now();
+      let last = started;
+
+      /** 途中で止まっても半端な位置に置き去りにしない */
+      const snap = () => {
+        if (motion.current !== state) return;
+        cancelAnimationFrame(state.raf);
+        clearTimeout(deadline);
+        motion.current = null;
+        setSpin(commit(Math.round(state.spin)));
+      };
+      const deadline = setTimeout(snap, 1800);
+
+      const tick = (now: number) => {
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+
+        // フレームが極端に遅い環境では惰性を諦めて枠に寄せる
+        if (now - started > 1500) {
+          snap();
+          return;
+        }
+
+        if (Math.abs(state.velocity) > SETTLE_VELOCITY) {
+          state.spin += state.velocity * dt;
+          state.velocity *= Math.exp(-FRICTION * dt);
+        } else {
+          // いちばん近い枠へ寄せる
+          const target = Math.round(state.spin);
+          state.spin += (target - state.spin) * (1 - Math.exp(-SETTLE_STIFFNESS * dt));
+          state.velocity = 0;
+          if (Math.abs(target - state.spin) < 0.001) {
+            state.spin = target;
+          }
+        }
+
+        state.spin = commit(state.spin);
+        setSpin(state.spin);
+
+        if (state.velocity === 0 && Math.abs(state.spin) < 0.0005) {
+          clearTimeout(deadline);
+          motion.current = null;
+          setSpin(0);
+          return;
+        }
+        state.raf = requestAnimationFrame(tick);
+      };
+      state.raf = requestAnimationFrame(tick);
+    },
+    [commit, setSpin]
+  );
+
+  // 指で横に払うと輪が回る。指の動きにそのまま追従させる。
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (spotlight || !onRotate) return;
+    if (spotlight || !onRotate || !ring) return;
     // ポストイットを押したときは選択が優先
     if ((event.target as HTMLElement).closest('.camp-memory-note')) return;
-    drag.current = { id: event.pointerId, x: event.clientX, carried: 0 };
+    if (motion.current) {
+      cancelAnimationFrame(motion.current.raf);
+      motion.current = null;
+    }
+    drag.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      lastX: event.clientX,
+      lastAt: performance.now(),
+      velocity: 0,
+    };
     setDragging(true);
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
-      // 捕捉できなくても、pointermove は拾えるので続行する
+      // 捕捉できなくても pointermove は拾えるので続行する
     }
   };
 
@@ -140,19 +296,23 @@ export default function CampDiorama({
     const state = drag.current;
     if (!state || state.id !== event.pointerId || !onRotate) return;
     const width = event.currentTarget.clientWidth || 1;
-    state.carried += event.clientX - state.x;
-    state.x = event.clientX;
-    const stepPx = width * DRAG_STEP_RATIO;
-    while (Math.abs(state.carried) >= stepPx) {
-      // 左に払うと次の 1 枚が手前に来る
-      const step = state.carried > 0 ? -1 : 1;
-      state.carried -= step > 0 ? -stepPx : stepPx;
-      onRotate(step);
-    }
+    const span = width * DRAG_SPAN_RATIO;
+    const now = performance.now();
+    const dx = event.clientX - state.lastX;
+    const dt = Math.max(1, now - state.lastAt) / 1000;
+
+    // 左に払うと次の 1 枚が手前に来る
+    const delta = -dx / span;
+    state.velocity = delta / dt;
+    state.lastX = event.clientX;
+    state.lastAt = now;
+
+    setSpin(commit(spinRef.current + delta));
   };
 
   const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!drag.current || drag.current.id !== event.pointerId) return;
+    const state = drag.current;
+    if (!state || state.id !== event.pointerId) return;
     drag.current = null;
     setDragging(false);
     try {
@@ -162,7 +322,16 @@ export default function CampDiorama({
     } catch {
       // 捕捉していなければ解放も不要
     }
+    // 直前の速度をそのまま引き継いで滑らせる
+    glide(spinRef.current, Math.max(-14, Math.min(14, state.velocity)));
   };
+
+  useEffect(
+    () => () => {
+      if (motion.current) cancelAnimationFrame(motion.current.raf);
+    },
+    []
+  );
 
   return (
     <div
@@ -171,6 +340,7 @@ export default function CampDiorama({
       data-shifting={shifting}
       data-spotlight={spotlight}
       data-dragging={dragging}
+      data-spinning={ring && spin !== 0}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endDrag}
@@ -208,7 +378,11 @@ export default function CampDiorama({
 
           <div className="camp-diorama-pins">
           {memories.map((memory, index) => {
-            const slot = PIN_SLOTS[index % PIN_SLOTS.length];
+            // 輪では指の動きに合わせて枠と枠のあいだも連続で動かす。
+            // 縦画面は格子なので整数の枠に置く。
+            const slot = ring
+              ? slotAt(index - spin)
+              : { ...PIN_SLOTS[index % PIN_SLOTS.length], fade: index < PIN_SLOTS.length ? 1 : 0 };
             const color = NOTE_COLORS[memory.color] ?? '#f5d995';
             const newest = memory.id === newestId;
 
@@ -216,13 +390,16 @@ export default function CampDiorama({
               <div
                 key={memory.id}
                 className="camp-diorama-pin"
-                /* 位置は CSS 変数で渡す。こうすると縦画面用の 2 段組みを
+                /* 位置は CSS 変数で渡す。こうすると縦画面用の格子を
                    メディアクエリ側だけで上書きできる。 */
                 style={
                   {
                     '--pin-x': `${slot.x}%`,
                     '--pin-y': `${slot.y}%`,
                     '--note-tilt': `${slot.tilt}deg`,
+                    opacity: slot.fade,
+                    // 手前 (下) にあるものほど前に描く
+                    zIndex: Math.round(slot.y),
                   } as CSSProperties
                 }
               >

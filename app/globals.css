@@ -1555,9 +1555,11 @@ body {
   animation: diorama-pin-float 6.4s ease-in-out infinite;
 }
 
-/* 指で払っている間は追従を速くする */
-.camp-diorama[data-dragging='true'] .camp-diorama-pin {
-  transition-duration: 260ms;
+/* 指で回している間と惰性で滑っている間は JS が毎フレーム位置を書くので、
+   CSS の補間を切る。両方効くと動きが鈍る。 */
+.camp-diorama[data-dragging='true'] .camp-diorama-pin,
+.camp-diorama[data-spinning='true'] .camp-diorama-pin {
+  transition: none;
 }
 
 .camp-diorama[data-dragging='true'] {
