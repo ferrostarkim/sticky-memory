@@ -1,6 +1,7 @@
 'use client';
 
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { COMPACT_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
 import { Memory } from '@/types/memory';
 
 interface CampDioramaProps {
@@ -145,7 +146,7 @@ export default function CampDiorama({
     setSpinState(value);
   }, []);
   /** 縦画面では輪を中央へ寄せて、端の札が画面から切れないようにする */
-  const [compact, setCompact] = useState(false);
+  const compact = useMediaQuery(COMPACT_QUERY);
   const drag = useRef<{
     id: number;
     x: number;
@@ -198,18 +199,6 @@ export default function CampDiorama({
       window.removeEventListener('blur', handleReset);
     };
   }, [spotlight]);
-
-  // 縦画面かどうか。輪の形は共通で、縦では中央へ少し圧縮するだけ。
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 760px)');
-    const apply = () => setCompact(mq.matches);
-    const raf = requestAnimationFrame(apply);
-    mq.addEventListener('change', apply);
-    return () => {
-      cancelAnimationFrame(raf);
-      mq.removeEventListener('change', apply);
-    };
-  }, []);
 
   /** 1 枠ぶん送り切ったら親に伝え、その分を戻して位置を保つ */
   const commit = useCallback(

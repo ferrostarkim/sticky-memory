@@ -1403,6 +1403,12 @@ body {
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
+  /* 島をポストイットより 80px 奥へ置く。舞台が傾くと札と背景がずれて
+     奥行きが出る。以前は逆に札を手前へ出していたが、それだと文字が
+     縮小 → 遠近で再拡大の二度手間になり、等倍のはずの字がぼやけた。
+     写真的な絵は 5% 再標本化しても分からないので、下げるのは島側。
+     scale = (perspective + 80) / perspective = 1680 / 1600 */
+  transform: translateZ(-80px) scale(1.05);
 }
 
 /* ── 静止画に重ねる環境アニメーション ─────────────────
@@ -1413,6 +1419,9 @@ body {
   z-index: 1;
   inset: 0;
   pointer-events: none;
+  /* 位置は画像に対する % なので、島と同じ奥行き・同じ倍率に置く。
+     ずらすと海の光や焚き火が島から外れる。 */
+  transform: translateZ(-80px) scale(1.05);
 }
 
 .camp-diorama-fx > span {
@@ -1539,11 +1548,9 @@ body {
   z-index: 3;
   inset: 0;
   pointer-events: none;
-  /* 島の表面より手前に浮かせる。舞台が傾くと背景とずれて奥行きが出る。
-     translateZ だけだと遠近法で 5% 拡大されて位置がずれるので、
-     同じ比率の scale で打ち消し、静止時の見た目は元のままにする。
-     scale = (perspective − z) / perspective = (1600 − 80) / 1600 */
-  transform: translateZ(80px) scale(0.95);
+  /* この層は z = 0 のまま、拡大も縮小もしない。
+     文字を等倍でラスタライズさせるため。奥行きは島側を後ろへ下げて作る
+     (.camp-diorama-art / .camp-diorama-fx を参照)。 */
 }
 
 .camp-diorama-pin {
@@ -1719,8 +1726,11 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* 動きを止める設定では奥行きも作らない。全部 z = 0 の平面に戻す。 */
   .camp-diorama-stage,
-  .camp-diorama-pins {
+  .camp-diorama-pins,
+  .camp-diorama-art,
+  .camp-diorama-fx {
     transform: none;
     transition: none;
   }
