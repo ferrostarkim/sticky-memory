@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import SubmitForm from '@/components/submit/SubmitForm';
 import VerseBanner from '@/components/common/VerseBanner';
 
@@ -21,6 +22,15 @@ export default function SubmitPage() {
             <SubmitForm />
           </div>
         </div>
+
+        <p className="text-center mt-5 animate-rise" style={{ animationDelay: '150ms' }}>
+          <Link
+            href="/"
+            className="font-ui inline-block text-sm text-[var(--ink-soft)] underline underline-offset-4 hover:text-[var(--ink)] transition"
+          >
+            投稿せずにボードを見る
+          </Link>
+        </p>
 
         <VerseBanner className="mt-6 px-2 animate-rise" />
       </div>

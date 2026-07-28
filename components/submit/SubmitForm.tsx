@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useState } from 'react';
+import Link from 'next/link';
 import { getSupabase, isSupabaseConfigured, PHOTO_BUCKET } from '@/lib/supabase';
 import { makeStickyStyle } from '@/lib/sticky';
 import Confetti from '@/components/common/Confetti';
@@ -136,12 +137,20 @@ export default function SubmitForm() {
         <div className="text-6xl animate-pop">🎉</div>
         <h2 className="font-display text-3xl font-semibold text-[var(--ink)]">ボードに表示されました！</h2>
         <p className="font-hand text-[var(--ink-soft)] text-lg">メッセージありがとうございます。</p>
-        <button
-          onClick={reset}
-          className="font-ui px-6 py-3 rounded-full bg-gradient-to-b from-[#e6ac52] to-[#d0872f] text-white font-semibold shadow-[0_10px_22px_-8px_rgba(208,135,47,0.85)] hover:brightness-105 transition"
-        >
-          もう一枚追加
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          <Link
+            href="/"
+            className="font-ui px-6 py-3 rounded-full bg-gradient-to-b from-[#e6ac52] to-[#d0872f] text-white font-semibold shadow-[0_10px_22px_-8px_rgba(208,135,47,0.85)] hover:brightness-105 transition"
+          >
+            ボードを見に行く →
+          </Link>
+          <button
+            onClick={reset}
+            className="font-ui px-6 py-3 rounded-full border border-[#e0cba4] bg-white/70 text-[var(--ink)] font-semibold hover:bg-white transition"
+          >
+            もう一枚追加
+          </button>
+        </div>
       </div>
     );
   }
