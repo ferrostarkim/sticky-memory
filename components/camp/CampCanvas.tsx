@@ -732,9 +732,6 @@ function JesusFigure() {
         <torusGeometry args={[0.48, 0.035, 8, 32]} />
         <meshStandardMaterial color="#e8c86e" emissive="#e8c86e" emissiveIntensity={0.28} />
       </mesh>
-      <Html center position={[0, 2.72, 0]} distanceFactor={16}>
-        <span className="camp-character-label">イエスさま</span>
-      </Html>
     </group>
   );
 }
@@ -771,9 +768,6 @@ function ChildFigure({ variant }: { variant: 0 | 1 }) {
         <sphereGeometry args={[0.4, 16, 14]} />
         <meshStandardMaterial color={variant === 0 ? '#594238' : '#3e3936'} />
       </mesh>
-      <Html center position={[0, 2.34, 0]} distanceFactor={16}>
-        <span className="camp-character-label">{variant === 0 ? 'こども' : 'おともだち'}</span>
-      </Html>
     </group>
   );
 }
@@ -809,9 +803,6 @@ function SheepFigure() {
           </mesh>
         ))
       )}
-      <Html center position={[0, 1.72, 0]} distanceFactor={16}>
-        <span className="camp-character-label">ひつじ</span>
-      </Html>
     </group>
   );
 }
@@ -849,9 +840,6 @@ function DogFigure() {
         <cylinderGeometry args={[0.05, 0.09, 0.82, 8]} />
         <meshStandardMaterial color="#c98f61" />
       </mesh>
-      <Html center position={[0, 1.52, 0]} distanceFactor={16}>
-        <span className="camp-character-label">わんちゃん</span>
-      </Html>
     </group>
   );
 }
