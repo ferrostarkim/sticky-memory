@@ -30,8 +30,10 @@ const DEV_PREVIEW_MEMORIES: Memory[] = [
   { id: 'preview-12', author: 'ひなた', content: '次のキャンプも楽しみにしています。', color: 'bg-purple-200', rotation: 1 },
 ];
 
-/** 島の上に同時に出す枚数。ジオラマ側の PIN_SLOTS と必ず一致させること。 */
-const STAGE_SLOTS = 9;
+/** 島の上に同時に出す枚数。ジオラマ側の輪の点数と必ず一致させること。
+    縦画面はステージが狭いので 5 枠の輪に落とす。 */
+const STAGE_SLOTS_WIDE = 9;
+const STAGE_SLOTS_COMPACT = 5;
 
 /** 新着を主人公の頭上に見せておく時間 */
 const HERALD_MS = 9000;
@@ -44,6 +46,7 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
   const [queuePaused, setQueuePaused] = useState(false);
   const [herald, setHerald] = useState<Memory | null>(null);
   const [manualHold, setManualHold] = useState(false);
+  const [stageSlots, setStageSlots] = useState(STAGE_SLOTS_WIDE);
   const manualTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shiftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heraldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,6 +57,18 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
     () => (previewing ? [...DEV_PREVIEW_MEMORIES, ...rehearsal] : memories),
     [previewing, rehearsal, memories]
   );
+
+  // 縦画面はステージ枠数を減らす (ジオラマ側の 5 点の輪と対応)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 760px)');
+    const apply = () => setStageSlots(mq.matches ? STAGE_SLOTS_COMPACT : STAGE_SLOTS_WIDE);
+    const raf = requestAnimationFrame(apply);
+    mq.addEventListener('change', apply);
+    return () => {
+      cancelAnimationFrame(raf);
+      mq.removeEventListener('change', apply);
+    };
+  }, []);
 
   // 開発時に ?herald=1 を付けると、新着が届く様子を確認できる。
   // Supabase を繋がずに主人公の反応を見たいとき用。
@@ -116,25 +131,25 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
   const stageMemories = useMemo(() => {
     // 枠数より 1 枚多く渡す。指で回している最中に、
     // 輪の端から入ってくる次の 1 枚を見せるため。
-    const count = Math.min(STAGE_SLOTS + 1, rotating.length);
+    const count = Math.min(stageSlots + 1, rotating.length);
     return Array.from(
       { length: count },
       (_, index) => rotating[(normalizedOffset + index) % rotating.length]
     );
-  }, [normalizedOffset, rotating]);
+  }, [normalizedOffset, rotating, stageSlots]);
   const queuedMemories = useMemo(() => {
-    if (rotating.length <= STAGE_SLOTS) return [];
+    if (rotating.length <= stageSlots) return [];
     return Array.from(
-      { length: rotating.length - STAGE_SLOTS },
+      { length: rotating.length - stageSlots },
       (_, index) =>
-        rotating[(normalizedOffset + STAGE_SLOTS + index) % rotating.length]
+        rotating[(normalizedOffset + stageSlots + index) % rotating.length]
     );
-  }, [normalizedOffset, rotating]);
+  }, [normalizedOffset, rotating, stageSlots]);
 
   /** step が正なら次へ、負なら前へ。手で回すときは即座に動かす。 */
   const rotate = useCallback(
     (step: number, animate = true) => {
-      if (rotating.length <= STAGE_SLOTS) return;
+      if (rotating.length <= stageSlots) return;
       if (!animate) {
         // 手で回している間に自動送りが割り込むと操作を奪われる
         setManualHold(true);
@@ -149,7 +164,7 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
         shiftTimer.current = null;
       }, 680);
     },
-    [shifting, rotating.length]
+    [shifting, rotating.length, stageSlots]
   );
 
   const shiftQueue = useCallback(() => rotate(1), [rotate]);
@@ -164,10 +179,10 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
   }, [manualHold, stageOffset]);
 
   useEffect(() => {
-    if (queuePaused || manualHold || selected || rotating.length <= STAGE_SLOTS) return;
+    if (queuePaused || manualHold || selected || rotating.length <= stageSlots) return;
     const interval = setInterval(shiftQueue, 5200);
     return () => clearInterval(interval);
-  }, [queuePaused, manualHold, selected, shiftQueue, rotating.length]);
+  }, [queuePaused, manualHold, selected, shiftQueue, rotating.length, stageSlots]);
 
   useEffect(
     () => () => {
@@ -193,6 +208,7 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
         <MemoryRibbon
           memories={queuedMemories}
           totalCount={visibleMemories.length}
+          stageSlots={stageSlots}
           shifting={shifting}
           paused={queuePaused || Boolean(selected)}
           onShift={shiftQueue}
@@ -280,6 +296,7 @@ const RIBBON_COLORS: Record<string, string> = {
 function MemoryRibbon({
   memories,
   totalCount,
+  stageSlots,
   shifting,
   paused,
   onShift,
@@ -288,6 +305,7 @@ function MemoryRibbon({
 }: {
   memories: Memory[];
   totalCount: number;
+  stageSlots: number;
   shifting: boolean;
   paused: boolean;
   onShift: () => void;
@@ -315,7 +333,7 @@ function MemoryRibbon({
       <div className="camp-memory-ribbon-title">
         <span>MEMORY QUEUE</span>
         <strong>次の思い出</strong>
-        <small>舞台 {STAGE_SLOTS} / 全{totalCount}</small>
+        <small>舞台 {stageSlots} / 全{totalCount}</small>
         <button type="button" onClick={onShift} disabled={shifting || memories.length === 0}>
           {paused ? '再開して送る' : '次へ送る'} <b>→</b>
         </button>
