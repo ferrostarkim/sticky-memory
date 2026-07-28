@@ -1346,6 +1346,13 @@ body {
   /* 画像自身の地色と完全に一致させ、余白との継ぎ目を消す。
      画像から実測した値 (#f8f0dd ではない) */
   background: #f5ebd5;
+  /* 横に払って輪を回すので、ドラッグ中に文字の範囲選択が始まると
+     操作を乗っ取られてしまう。本文は Lightbox で選択できる。 */
+  user-select: none;
+  -webkit-user-select: none;
+  /* タッチのスクロールやズームに奪われず、こちらのハンドラで受ける */
+  touch-action: none;
+  cursor: grab;
   /* 舞台をわずかに傾けて立体感を出すための遠近法 */
   perspective: 1600px;
   perspective-origin: 50% 50%;
@@ -1824,35 +1831,12 @@ body {
     width: 152cqw;
   }
 
-  /* 幅 390px に 96px のポストイットを横一列で 6 枚は入らない。
-     奥 3 枚・手前 3 枚の 2 段に組み替え、手前列を半歩ずらして重なりを避ける。
-
-     --pin-x / --pin-y は React がインラインで設定しており、インライン宣言は
-     スタイルシートより強いので上書きできない。縦画面専用の別名を使う。 */
-  .camp-diorama-pin {
-    left: var(--pin-mx);
-    top: var(--pin-my);
-  }
-
-  /* 縦画面は 3 段 3 列。ステージが低いので札も一回り小さくする。 */
+  /* 縦画面も輪は共通 (位置は JS が --pin-x で置く)。
+     ステージが低いぶん、札を一回り小さくするだけ。 */
   .camp-diorama-pin .camp-memory-note {
     width: 84px;
     max-height: 76px;
   }
-
-  .camp-diorama-pin:nth-child(1) { --pin-mx: 26%; --pin-my: 30%; }
-  .camp-diorama-pin:nth-child(2) { --pin-mx: 50%; --pin-my: 30%; }
-  .camp-diorama-pin:nth-child(3) { --pin-mx: 74%; --pin-my: 30%; }
-  .camp-diorama-pin:nth-child(4) { --pin-mx: 26%; --pin-my: 58%; }
-  .camp-diorama-pin:nth-child(5) { --pin-mx: 50%; --pin-my: 58%; }
-  .camp-diorama-pin:nth-child(6) { --pin-mx: 74%; --pin-my: 58%; }
-  .camp-diorama-pin:nth-child(7) { --pin-mx: 26%; --pin-my: 86%; }
-  .camp-diorama-pin:nth-child(8) { --pin-mx: 50%; --pin-my: 86%; }
-  .camp-diorama-pin:nth-child(9) { --pin-mx: 74%; --pin-my: 86%; }
-
-  /* 手前の段ほど前に描く */
-  .camp-diorama-pin:nth-child(n + 4) { z-index: 2; }
-  .camp-diorama-pin:nth-child(n + 7) { z-index: 3; }
 
   .camp-diorama-pin-stem {
     height: 18px;
