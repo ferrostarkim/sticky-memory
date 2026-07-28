@@ -390,11 +390,12 @@ body {
   font-size: 1rem;
 }
 
+/* キューを横に広げるため、案内文はリボンの上に逃がす */
 .camp-instructions {
   position: absolute;
   z-index: 20;
   left: clamp(1.25rem, 4vw, 4.5rem);
-  bottom: clamp(1.25rem, 4vw, 3rem);
+  bottom: calc(0.9rem + 118px + 1.4rem);
   display: flex;
   align-items: center;
   gap: 0.82rem;
@@ -751,11 +752,13 @@ body {
   background: #f8f0dd;
 }
 
+/* ディオラマ画像の地色 (#f8f0dd) を基準にする。
+   グラデーションを強くすると画像の縁に継ぎ目が見えてしまう。 */
 .camp-sky {
   background:
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.95), transparent 28%),
-    radial-gradient(circle at 84% 12%, rgba(225, 202, 221, 0.38), transparent 26%),
-    linear-gradient(145deg, #fffaf0 0%, #f4ead8 64%, #eee1cf 100%);
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.62), transparent 32%),
+    radial-gradient(circle at 84% 8%, rgba(225, 202, 221, 0.2), transparent 26%),
+    #f8f0dd;
 }
 
 .camp-sky::after {
@@ -1165,26 +1168,15 @@ body {
   to { opacity: 1; transform: rotate(-1deg); }
 }
 
-.camp-character-label {
-  display: block;
-  padding: 0.18rem 0.38rem;
-  border: 1px solid rgba(126, 102, 115, 0.12);
-  border-radius: 999px;
-  color: #725f68;
-  background: rgba(255,251,241,0.88);
-  box-shadow: 0 4px 10px rgba(89,69,71,0.1);
-  font-family: var(--font-ui);
-  font-size: 0.38rem;
-  font-weight: 700;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 .camp-memory-ribbon {
+  /* カード幅 + gap。memory-queue-shift のスライド量と必ず一致させること */
+  --queue-pitch: 122px;
   position: absolute;
   z-index: 24;
-  left: clamp(18rem, 22vw, 22rem);
-  right: clamp(18rem, 23vw, 22rem);
+  /* 左は案内文を上に逃がしたぶん端まで使える。
+     右は QR バナー (幅 308px) を避ける。 */
+  left: clamp(1.25rem, 4vw, 4.5rem);
+  right: clamp(20rem, 27vw, 25rem);
   bottom: 0.9rem;
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr);
@@ -1272,10 +1264,11 @@ body {
 
 .camp-ribbon-note {
   position: relative;
-  flex: 0 0 136px;
+  /* --queue-pitch から gap 10px を引いた幅 */
+  flex: 0 0 112px;
   display: flex;
   flex-direction: column;
-  padding: 0.7rem 0.62rem 0.46rem;
+  padding: 0.7rem 0.58rem 0.46rem;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.78);
   border-radius: 4px 4px 12px 4px;
@@ -1321,13 +1314,15 @@ body {
   animation: memory-stage-leave 680ms cubic-bezier(0.55, 0, 0.2, 1) both;
 }
 
-.camp-memory-slot-5 {
+/* 輪の末尾。ここに現れて、先頭から消えていく。
+   枠数を変えたら CampDiorama の PIN_SLOTS と揃えること。 */
+.camp-memory-slot-8 {
   animation: memory-stage-arrive 720ms cubic-bezier(0.2, 1.25, 0.35, 1) both;
 }
 
 @keyframes memory-queue-shift {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-146px); }
+  100% { transform: translateX(calc(var(--queue-pitch, 122px) * -1)); }
 }
 
 @keyframes memory-stage-leave {
@@ -1338,6 +1333,400 @@ body {
 @keyframes memory-stage-arrive {
   from { opacity: 0; transform: translateY(14px) scale(0.65) rotate(5deg); }
   to { opacity: 1; transform: rotate(-1deg); }
+}
+
+/* ── 静的ディオラマ舞台 ──────────────────────────────────
+   3D キャンバスの代わりに 1 枚のディオラマ画像を背景として敷き、
+   その上に思い出のポストイットを HTML で重ねる。
+   ピン座標は画像に対する % なので、拡大縮小しても位置がずれない。 */
+
+.camp-diorama {
+  overflow: hidden;
+  container-type: size;
+  /* 画像自身の地色と完全に一致させ、余白との継ぎ目を消す。
+     画像から実測した値 (#f8f0dd ではない) */
+  background: #f5ebd5;
+  /* 舞台をわずかに傾けて立体感を出すための遠近法 */
+  perspective: 1600px;
+  perspective-origin: 50% 50%;
+}
+
+.camp-diorama-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* 島の全体が必ず入るように contain。画像には余白がほとんどないため、
+     覆う (cover) と上下が切れて木や十字架が消える。 */
+  width: min(100cqw, calc(100cqh * 2752 / 1536));
+  aspect-ratio: 2752 / 1536;
+  /* 中央寄せは translate、視差は transform と役割を分ける */
+  translate: -50% -50%;
+  /* ポストイットに奥行きを持たせるので、この層は平面化しない */
+  transform-style: preserve-3d;
+  /* 平行移動に加えて少し傾ける。カーソル側を覗き込むような向きにする。 */
+  transform:
+    translate(
+      calc(var(--diorama-px, 0) * -18px),
+      calc(var(--diorama-py, 0) * -12px)
+    )
+    rotateX(calc(var(--diorama-py, 0) * 5deg))
+    rotateY(calc(var(--diorama-px, 0) * -8deg));
+  transition: transform 480ms cubic-bezier(0.22, 0.8, 0.3, 1);
+  will-change: transform;
+}
+
+/* 浮島がゆっくり上下する層。ポストイットも一緒に動く。 */
+.camp-diorama-float {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: fx-island-bob 9.5s ease-in-out infinite;
+}
+
+@keyframes fx-island-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -0.9%; }
+}
+
+.camp-diorama-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ── 静止画に重ねる環境アニメーション ─────────────────
+   位置はすべて画像に対する %。画像を差し替えたら測り直すこと。 */
+
+.camp-diorama-fx {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.camp-diorama-fx > span {
+  position: absolute;
+  display: block;
+}
+
+/* 海：やわらかい光のかたまりをゆっくり漂わせる。
+   縞模様を使うと白い線として見えてしまうので使わない。 */
+.camp-fx-sea {
+  left: 58.5%;
+  top: 21.5%;
+  width: 25.5%;
+  height: 36%;
+  opacity: 0.6;
+  background:
+    radial-gradient(ellipse 42% 52% at 32% 38%, rgba(255, 255, 255, 0.24), transparent 72%),
+    radial-gradient(ellipse 32% 40% at 68% 62%, rgba(255, 255, 255, 0.16), transparent 74%);
+  mix-blend-mode: soft-light;
+  mask-image: radial-gradient(ellipse at 54% 52%, #000 34%, transparent 72%);
+  animation: fx-sea 13s ease-in-out infinite alternate;
+}
+
+@keyframes fx-sea {
+  from { transform: translate(-5%, 2%) scale(1); }
+  to { transform: translate(8%, -3%) scale(1.08); }
+}
+
+/* 焚き火：不規則な明滅で炎らしさを出す */
+.camp-fx-fire {
+  left: 31%;
+  top: 49.3%;
+  width: 9%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 186, 98, 0.5),
+    rgba(255, 148, 58, 0.16) 44%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+  animation: fx-fire 2.4s ease-in-out infinite;
+}
+
+@keyframes fx-fire {
+  0%, 100% { opacity: 0.55; scale: 1; }
+  28% { opacity: 0.9; scale: 1.11; }
+  52% { opacity: 0.6; scale: 0.95; }
+  76% { opacity: 0.95; scale: 1.05; }
+}
+
+/* 空気中のほこり。ゆっくり上に流れる */
+.camp-fx-motes {
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.9) 0 1.4px, transparent 2px),
+    radial-gradient(circle, rgba(255, 244, 212, 0.75) 0 1.1px, transparent 1.8px);
+  background-size: 186px 186px, 262px 262px;
+  background-position: 0 0, 92px 58px;
+  mask-image: radial-gradient(ellipse at 50% 46%, #000 22%, transparent 70%);
+  animation: fx-motes 27s linear infinite;
+}
+
+@keyframes fx-motes {
+  to { background-position: 38px -186px, 128px -204px; }
+}
+
+/* ── イントロの飛び込み映像 ────────────────────────
+   最初の一度だけ。終わり際に静止画のボードへ重ねて消える。 */
+
+.camp-intro {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  /* 映像とジオラマ画像の地色に合わせる */
+  background: #f5ebd5;
+  opacity: 1;
+  transition: opacity 450ms ease;
+}
+
+.camp-intro[data-phase='fading'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.camp-intro-frame {
+  position: fixed;
+}
+
+.camp-intro-frame video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* 枠はステージ (背景画像が描かれる矩形) と同じにしてある。
+     映像は 16:9、画像は 1.7917 とわずかに違うので contain だと大きさが
+     ずれてクロスフェードで跳ねる。fill で枠いっぱいに合わせる
+     (横 0.8% の伸びは見て分からない)。 */
+  object-fit: fill;
+}
+
+.camp-intro-skip {
+  position: absolute;
+  right: clamp(1rem, 3vw, 2.4rem);
+  bottom: clamp(1rem, 3vw, 2.4rem);
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  color: #7b6a5f;
+  background: rgba(255, 252, 244, 0.72);
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camp-intro {
+    display: none;
+  }
+}
+
+.camp-diorama-pins {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  /* 島の表面より手前に浮かせる。舞台が傾くと背景とずれて奥行きが出る。
+     translateZ だけだと遠近法で 5% 拡大されて位置がずれるので、
+     同じ比率の scale で打ち消し、静止時の見た目は元のままにする。
+     scale = (perspective − z) / perspective = (1600 − 80) / 1600 */
+  transform: translateZ(80px) scale(0.95);
+}
+
+.camp-diorama-pin {
+  position: absolute;
+  left: var(--pin-x);
+  top: var(--pin-y);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  transform: translate(-50%, -100%);
+  rotate: var(--note-tilt, 0deg);
+  /* 枠が入れ替わるとき、飛ばずに滑って移動させる */
+  transition: left 560ms cubic-bezier(0.3, 0.9, 0.3, 1),
+    top 560ms cubic-bezier(0.3, 0.9, 0.3, 1);
+  animation: diorama-pin-float 6.4s ease-in-out infinite;
+}
+
+/* 指で払っている間は追従を速くする */
+.camp-diorama[data-dragging='true'] .camp-diorama-pin {
+  transition-duration: 260ms;
+}
+
+.camp-diorama[data-dragging='true'] {
+  cursor: grabbing;
+}
+
+.camp-diorama-pin:nth-child(2n) {
+  animation-duration: 7.6s;
+  animation-delay: -1.9s;
+}
+
+.camp-diorama-pin:nth-child(3n) {
+  animation-duration: 5.8s;
+  animation-delay: -3.4s;
+}
+
+@keyframes diorama-pin-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+
+/* ── 新着のお披露目 ────────────────────────────────
+   届いたばかりの 1 枚を主人公の頭上に出し、ひとこと言わせる。 */
+
+.camp-herald {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+}
+
+.camp-herald-note {
+  position: absolute;
+  left: var(--pin-x);
+  top: var(--pin-y);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  transform: translate(-50%, -100%);
+  animation: herald-drop 720ms cubic-bezier(0.22, 1.3, 0.36, 1) both,
+    diorama-pin-float 4.6s ease-in-out 720ms infinite;
+}
+
+.camp-herald-note .camp-memory-note {
+  flex: none;
+  width: 108px;
+  box-shadow:
+    0 12px 26px rgba(91, 68, 68, 0.24),
+    0 0 0 3px rgba(255, 252, 236, 0.9),
+    0 0 22px 6px rgba(255, 226, 150, 0.55);
+}
+
+/* 頭上から降りてくる光の筋 */
+.camp-herald-beam {
+  width: 3px;
+  height: 26px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(255, 226, 150, 0.9), rgba(255, 226, 150, 0));
+}
+
+@keyframes herald-drop {
+  from { opacity: 0; translate: 0 -26px; scale: 0.7; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+.camp-herald-bubble {
+  position: absolute;
+  left: var(--pin-x);
+  top: var(--pin-y);
+  max-width: 190px;
+  margin: 0;
+  padding: 0.5rem 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 14px 14px 14px 4px;
+  color: #5c4a45;
+  background: rgba(255, 252, 240, 0.94);
+  box-shadow: 0 10px 22px rgba(96, 74, 66, 0.18);
+  font-family: var(--font-hand);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  animation: herald-say 620ms cubic-bezier(0.22, 1.3, 0.36, 1) 320ms both;
+}
+
+/* ふきだしの尻尾を主人公のほうへ向ける */
+.camp-herald-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: -7px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 8px solid rgba(255, 252, 240, 0.94);
+}
+
+@keyframes herald-say {
+  from { opacity: 0; translate: -8px 6px; scale: 0.9; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+@media (max-width: 760px) {
+  .camp-herald-bubble {
+    max-width: 148px;
+    font-size: 0.56rem;
+  }
+}
+
+.camp-diorama-pin:hover,
+.camp-diorama-pin:focus-within {
+  z-index: 3;
+  animation-play-state: paused;
+}
+
+/* 島の上に 6 枚並べても重ならない幅にする。キューのカードより一回り小さい。 */
+.camp-diorama-pin .camp-memory-note {
+  flex: none;
+  width: 96px;
+}
+
+.camp-diorama-pin-stem {
+  width: 3px;
+  height: 26px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(180deg, #96725a 0%, #6f523f 100%);
+}
+
+/* 地面に落ちる小さな影。ポストイットが浮いて見えるようにする */
+.camp-diorama-pin::after {
+  content: '';
+  width: 22px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(88, 74, 62, 0.26);
+  filter: blur(2px);
+}
+
+
+/* 投影モードではゆっくり漂わせる（旧 autoRotate の代わり） */
+.camp-diorama[data-spotlight='true'] .camp-diorama-stage {
+  animation: diorama-drift 48s ease-in-out infinite alternate;
+}
+
+/* 中央寄せの translate: -50% -50% は個別プロパティ側で維持されるので、
+   ここでは transform だけを動かせばよい。投影モードでは視差が無効なので衝突しない。 */
+@keyframes diorama-drift {
+  from { transform: translate(-1.2%, 0.5%) scale(1); }
+  to { transform: translate(1.2%, -0.9%) scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camp-diorama-stage,
+  .camp-diorama-pins {
+    transform: none;
+    transition: none;
+  }
+
+  .camp-diorama-pin,
+  .camp-diorama-float,
+  .camp-diorama-fx > span,
+  .camp-diorama[data-spotlight='true'] .camp-diorama-stage {
+    animation: none;
+  }
+
+  /* 動きを止めるだけで、炎や水の色味は残す */
+  .camp-fx-motes {
+    display: none;
+  }
 }
 
 .camp-ribbon-note::before {
@@ -1383,8 +1772,11 @@ body {
   bottom: 6.8rem;
 }
 
+/* リボン (bottom 0.9rem / height 118px) の上に必ず乗せる。
+   ここは .camp-instructions の基本ルールより詳細度が高いので、
+   位置を変えるときは必ずこちらを直すこと。 */
 .camp-shell:not(.camp-shell-spotlight) .camp-instructions {
-  bottom: 8.2rem;
+  bottom: calc(0.9rem + 118px + 1.4rem);
 }
 
 @media (max-width: 760px) {
@@ -1422,11 +1814,51 @@ body {
     height: 30px;
   }
 
-  .camp-character-label {
-    display: none;
+  /* 縦画面では contain だと島が小さすぎるので拡大し、
+     下部のキューと重ならないように上寄せにする。
+     専用の縦長画像を用意したらこの倍率は不要になる。 */
+  .camp-diorama-stage {
+    top: 38%;
+    width: 152cqw;
+  }
+
+  /* 幅 390px に 96px のポストイットを横一列で 6 枚は入らない。
+     奥 3 枚・手前 3 枚の 2 段に組み替え、手前列を半歩ずらして重なりを避ける。
+
+     --pin-x / --pin-y は React がインラインで設定しており、インライン宣言は
+     スタイルシートより強いので上書きできない。縦画面専用の別名を使う。 */
+  .camp-diorama-pin {
+    left: var(--pin-mx);
+    top: var(--pin-my);
+  }
+
+  /* 縦画面は 3 段 3 列。ステージが低いので札も一回り小さくする。 */
+  .camp-diorama-pin .camp-memory-note {
+    width: 84px;
+    max-height: 76px;
+  }
+
+  .camp-diorama-pin:nth-child(1) { --pin-mx: 26%; --pin-my: 30%; }
+  .camp-diorama-pin:nth-child(2) { --pin-mx: 50%; --pin-my: 30%; }
+  .camp-diorama-pin:nth-child(3) { --pin-mx: 74%; --pin-my: 30%; }
+  .camp-diorama-pin:nth-child(4) { --pin-mx: 26%; --pin-my: 58%; }
+  .camp-diorama-pin:nth-child(5) { --pin-mx: 50%; --pin-my: 58%; }
+  .camp-diorama-pin:nth-child(6) { --pin-mx: 74%; --pin-my: 58%; }
+  .camp-diorama-pin:nth-child(7) { --pin-mx: 26%; --pin-my: 86%; }
+  .camp-diorama-pin:nth-child(8) { --pin-mx: 50%; --pin-my: 86%; }
+  .camp-diorama-pin:nth-child(9) { --pin-mx: 74%; --pin-my: 86%; }
+
+  /* 手前の段ほど前に描く */
+  .camp-diorama-pin:nth-child(n + 4) { z-index: 2; }
+  .camp-diorama-pin:nth-child(n + 7) { z-index: 3; }
+
+  .camp-diorama-pin-stem {
+    height: 18px;
   }
 
   .camp-memory-ribbon {
+    /* 縦画面はカード 116px + gap 0.55rem */
+    --queue-pitch: 125px;
     position: absolute;
     z-index: 24;
     left: 0;
