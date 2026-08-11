@@ -109,11 +109,12 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
     };
   }, [herald]);
 
-  const visibleMemories = useMemo(() => displayMemories.slice(-36), [displayMemories]);
+  // 届いた思い出はすべて輪に入れる。枚数を切ると
+  // ヘッダーの LIVE 件数と「全◯」が食い違ってしまう。
   // 頭上に出ている 1 枚は輪から外す。二重に出さないため。
   const rotating = useMemo(
-    () => (herald ? visibleMemories.filter((m) => m.id !== herald.id) : visibleMemories),
-    [visibleMemories, herald]
+    () => (herald ? displayMemories.filter((m) => m.id !== herald.id) : displayMemories),
+    [displayMemories, herald]
   );
   const normalizedOffset = rotating.length
     ? ((stageOffset % rotating.length) + rotating.length) % rotating.length
@@ -197,7 +198,7 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
       {!spotlight && (
         <MemoryRibbon
           memories={queuedMemories}
-          totalCount={visibleMemories.length}
+          totalCount={displayMemories.length}
           stageSlots={stageSlots}
           shifting={shifting}
           paused={queuePaused || Boolean(selected)}
