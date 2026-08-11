@@ -197,7 +197,7 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
       {!spotlight && (
         <MemoryRibbon
           memories={queuedMemories}
-          totalCount={visibleMemories.length}
+          totalCount={displayMemories.length}
           stageSlots={stageSlots}
           shifting={shifting}
           paused={queuePaused || Boolean(selected)}
