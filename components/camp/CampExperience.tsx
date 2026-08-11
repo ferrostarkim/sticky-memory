@@ -39,6 +39,9 @@ const STAGE_SLOTS_COMPACT = 5;
 /** 新着を主人公の頭上に見せておく時間 */
 const HERALD_MS = 9000;
 
+/** 手で操作したあと、自動送りを控えておく時間 */
+const MANUAL_HOLD_MS = 8000;
+
 export default function CampExperience({ spotlight = false }: CampExperienceProps) {
   const { memories, connected } = useMemories();
   const [selected, setSelected] = useState<Memory | null>(null);
@@ -47,12 +50,16 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
   const [queuePaused, setQueuePaused] = useState(false);
   const [herald, setHerald] = useState<Memory | null>(null);
   const [manualHold, setManualHold] = useState(false);
+  // 手を動かすたびに増やす。同じ true を入れ直しても
+  // 再レンダリングが起きず、待ち時間が延びないため。
+  const [holdTick, setHoldTick] = useState(0);
   const compact = useMediaQuery(COMPACT_QUERY);
   const stageSlots = compact ? STAGE_SLOTS_COMPACT : STAGE_SLOTS_WIDE;
   const manualTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shiftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heraldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const knownIds = useRef<Set<string> | null>(null);
+  const holdStamp = useRef(0);
   const previewing = process.env.NODE_ENV === 'development' && !isSupabaseConfigured;
   const [rehearsal, setRehearsal] = useState<Memory[]>([]);
   const displayMemories = useMemo(
@@ -137,13 +144,22 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
     );
   }, [normalizedOffset, rotating, stageSlots]);
 
+  /** 手で触っている間は自動送りを控える。割り込むと操作を奪ってしまう。
+      指で払うと touchmove が毎秒何十回も飛ぶので、間引いて状態を更新する。 */
+  const holdAuto = useCallback(() => {
+    const now = performance.now();
+    if (now - holdStamp.current < 400) return;
+    holdStamp.current = now;
+    setManualHold(true);
+    setHoldTick((current) => current + 1);
+  }, []);
+
   /** step が正なら次へ、負なら前へ。手で回すときは即座に動かす。 */
   const rotate = useCallback(
     (step: number, animate = true) => {
       if (rotating.length <= stageSlots) return;
       if (!animate) {
-        // 手で回している間に自動送りが割り込むと操作を奪われる
-        setManualHold(true);
+        holdAuto();
         setStageOffset((current) => current + step);
         return;
       }
@@ -155,7 +171,7 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
         shiftTimer.current = null;
       }, 680);
     },
-    [shifting, rotating.length, stageSlots]
+    [shifting, rotating.length, stageSlots, holdAuto]
   );
 
   const shiftQueue = useCallback(() => rotate(1), [rotate]);
@@ -163,11 +179,11 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
   // 手で回したあとはしばらく自動送りを止める
   useEffect(() => {
     if (!manualHold) return;
-    manualTimer.current = setTimeout(() => setManualHold(false), 6000);
+    manualTimer.current = setTimeout(() => setManualHold(false), MANUAL_HOLD_MS);
     return () => {
       if (manualTimer.current) clearTimeout(manualTimer.current);
     };
-  }, [manualHold, stageOffset]);
+  }, [manualHold, holdTick, stageOffset]);
 
   useEffect(() => {
     if (queuePaused || manualHold || selected || rotating.length <= stageSlots) return;
@@ -202,7 +218,9 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
           stageSlots={stageSlots}
           shifting={shifting}
           paused={queuePaused || Boolean(selected)}
+          held={manualHold}
           onShift={shiftQueue}
+          onHold={holdAuto}
           onPauseChange={setQueuePaused}
           onSelect={setSelected}
         />
@@ -290,7 +308,9 @@ function MemoryRibbon({
   stageSlots,
   shifting,
   paused,
+  held,
   onShift,
+  onHold,
   onPauseChange,
   onSelect,
 }: {
@@ -299,10 +319,25 @@ function MemoryRibbon({
   stageSlots: number;
   shifting: boolean;
   paused: boolean;
+  held: boolean;
   onShift: () => void;
+  onHold: () => void;
   onPauseChange: (paused: boolean) => void;
   onSelect: (memory: Memory) => void;
 }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const head = memories[0]?.id;
+
+  // 自動送りは列の先頭を 1 枚ずつ抜いていく。ブラウザはそのぶん
+  // スクロール位置を戻すので、ずれたままだと動きが打ち消し合って
+  // 止まって見える。手を離しているあいだは先頭に帰しておく。
+  useEffect(() => {
+    if (held) return;
+    const track = trackRef.current;
+    if (!track || track.scrollLeft === 0) return;
+    track.scrollTo({ left: 0, behavior: 'smooth' });
+  }, [held, head]);
+
   return (
     <section
       className="camp-memory-ribbon"
@@ -329,7 +364,15 @@ function MemoryRibbon({
           {paused ? '再開して送る' : '次へ送る'} <b>→</b>
         </button>
       </div>
-      <div className="camp-memory-ribbon-track" aria-live="polite">
+      <div
+        className="camp-memory-ribbon-track"
+        ref={trackRef}
+        aria-live="polite"
+        /* 指やホイールで列をたどっている間は、自動送りに邪魔させない */
+        onWheel={onHold}
+        onTouchStart={onHold}
+        onTouchMove={onHold}
+      >
         {memories.map((memory) => (
           <button
             key={memory.id}
