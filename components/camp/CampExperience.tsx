@@ -68,6 +68,22 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
     [previewing, rehearsal, memories]
   );
 
+  // 拡大表示のまま左右に送るための位置。輪の並びではなく、届いた順の
+  // 全件をたどる。舞台に出ていない札も読めたほうがよいため。
+  const selectedIndex = useMemo(
+    () => (selected ? displayMemories.findIndex((m) => m.id === selected.id) : -1),
+    [selected, displayMemories]
+  );
+  /** delta が +1 で次、-1 で前。端まで行ったら反対の端へ回す。 */
+  const stepSelected = useCallback(
+    (delta: number) => {
+      const total = displayMemories.length;
+      if (!total || selectedIndex < 0) return;
+      setSelected(displayMemories[(selectedIndex + delta + total) % total]);
+    },
+    [displayMemories, selectedIndex]
+  );
+
   // 開発時に ?herald=1 を付けると、新着が届く様子を確認できる。
   // Supabase を繋がずに主人公の反応を見たいとき用。
   useEffect(() => {
@@ -296,7 +312,19 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
 
       {!spotlight && <CampIntroDive />}
 
-      {selected && <Lightbox memory={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <Lightbox
+          memory={selected}
+          onClose={() => setSelected(null)}
+          onPrev={displayMemories.length > 1 ? () => stepSelected(-1) : undefined}
+          onNext={displayMemories.length > 1 ? () => stepSelected(1) : undefined}
+          position={
+            selectedIndex >= 0
+              ? { index: selectedIndex + 1, total: displayMemories.length }
+              : undefined
+          }
+        />
+      )}
     </main>
   );
 }
