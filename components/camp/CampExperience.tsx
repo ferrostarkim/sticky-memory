@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CampDiorama from '@/components/camp/CampDiorama';
 import CampIntroDive from '@/components/camp/CampIntroDive';
 import { COMPACT_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
+import { SUBMISSIONS_OPEN } from '@/lib/config';
 import JoinBanner from '@/components/common/JoinBanner';
 import Lightbox from '@/components/common/Lightbox';
 import VerseBanner from '@/components/common/VerseBanner';
@@ -244,23 +245,30 @@ export default function CampExperience({ spotlight = false }: CampExperienceProp
             </div>
           </div>
 
-          <div className="camp-join-desktop">
-            <JoinBanner size={96} />
-          </div>
+          {/* 受付を閉じたら QR と追加ボタンは出さない (lib/config.ts) */}
+          {SUBMISSIONS_OPEN && (
+            <>
+              <div className="camp-join-desktop">
+                <JoinBanner size={96} />
+              </div>
 
-          <Link href="/submit" className="camp-mobile-submit">
-            <span aria-hidden>＋</span>
-            思い出を追加
-          </Link>
+              <Link href="/submit" className="camp-mobile-submit">
+                <span aria-hidden>＋</span>
+                思い出を追加
+              </Link>
+            </>
+          )}
         </>
       )}
 
       {spotlight && (
         <div className="camp-spotlight-footer">
           <VerseBanner />
-          <div className="camp-join-compact">
-            <JoinBanner size={84} />
-          </div>
+          {SUBMISSIONS_OPEN && (
+            <div className="camp-join-compact">
+              <JoinBanner size={84} />
+            </div>
+          )}
         </div>
       )}
 
