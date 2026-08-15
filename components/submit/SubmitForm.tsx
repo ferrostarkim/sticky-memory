@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { getSupabase, isSupabaseConfigured, PHOTO_BUCKET } from '@/lib/supabase';
 import { makeStickyStyle } from '@/lib/sticky';
+import { SUBMISSIONS_OPEN } from '@/lib/config';
 import Confetti from '@/components/common/Confetti';
 
 type Status = 'idle' | 'sending' | 'done' | 'error';
@@ -64,6 +65,12 @@ export default function SubmitForm() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    // 受付を閉じているあいだは、万一この画面が出ても送信させない。
+    // 本当の鍵は Supabase 側のポリシー (supabase/close-submissions.sql)。
+    if (!SUBMISSIONS_OPEN) {
+      setError('メッセージの受付は終了しました。');
+      return;
+    }
     if (!content.trim() && !blob) {
       setError('メッセージを書くか、写真を追加してください。');
       return;
